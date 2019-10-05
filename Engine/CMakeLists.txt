@@ -35,7 +35,8 @@ target_link_libraries(openGLTest glfw3 assimp-vc140-mt)
 # will run the executable from inside a folder specified by VS_DEBUGGER_WORKING_DIRECTORY.
 # By default it's the local ./Debug folder. Need to set this to the output folder specified above
 # so that the executable can access all the dll, shader, models..etc files
-set_property(TARGET openGLTest PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# Note the $<CONFIGURATION> variable here is either Debug or Release
+set_property(TARGET openGLTest PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
 
 
 # copy the runtime .dll files of the third party library to the output folder 
