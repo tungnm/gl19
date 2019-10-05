@@ -1,0 +1,7 @@
+bin/**
+*.vcxproj
+*.sln
+*.vcxproj.filters
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
