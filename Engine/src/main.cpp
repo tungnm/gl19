@@ -52,6 +52,7 @@ int main() {
     Mesh m1;
     m1.LoadObjFile("stego.obj");
 
+    int x = 0;
 
     glEnable(GL_DEPTH_TEST);
     /* Loop until the user closes the window */
@@ -62,10 +63,10 @@ int main() {
 
        
         glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.1f ,0.1f ,0.1f ));
-        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
+        model = glm::rotate(model, glm::radians(float(x)), glm::vec3(0.0f, 1.0f, 0.0f));
+        x = (x + 1) % 360;
         glm::mat4 view = glm::lookAt(
-            glm::vec3(2, 0, 3 ), // Camera is at (2, 0, 3), in World Space
+            glm::vec3(2, 1, 5 ), // Camera is at (2, 0, 3), in World Space
             glm::vec3(0, 0, 0), // and looks at the origin
             glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
         );

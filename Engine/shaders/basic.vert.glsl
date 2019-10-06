@@ -12,15 +12,28 @@ out vec3 Color;
 
 void main()
 {
-vec3 Kd = vec3(0.9f, 0.5f, 0.3f);
-    vec3 Ld = vec3(1.0f, 1.0f, 1.0f);
-
-    vec3 tnorm = normalize(vec3( normalToView * VertexNormal));
-vec4 camCoords = ModelView * vec4(VertexPosition,1.0);
-vec3 s = normalize(vec3(LightPosView - camCoords));
-// The diffuse shading equation
-Color = Ld * Kd * max( dot( s, tnorm ), 0.0 );
-
-    gl_Position = MVP * vec4(VertexPosition, 1.0);
-    //gl_Position = vec4(VertexPosition, 1.0);
+    // transform normal to view space
+    vec3 n = normalize(normalToView * VertexNormal);
+    vec4 vertexPosInView = ModelView * vec4(VertexPosition, 1.0);
+    vec3 s = normalize(vec3(LightPosView - vertexPosInView));
+    
+    float diffuseIntensity = dot(s,n);
+    
+    vec3 diffuse = diffuseIntensity * vec3(0.9f, 0.5f, 0.3f);
+    
+    // since in view space camera is at (0,0,0), the vector from
+    // the vertex to the camera = (0,0,0) - vertex position in View
+    vec3 v = normalize(-vertexPosInView.xyz);
+    
+    vec3 r = 2 * diffuseIntensity * n - s;
+      
+    float specularIntensity = pow(dot(r, v),2);
+    
+    vec3 specular = specularIntensity * vec3(0.0);
+    
+    Color = diffuse + specular;
+    
+    gl_Position = MVP * vec4(VertexPosition,1.0);
+    
+    
 }
