@@ -19,13 +19,23 @@ void main()
     // the vertex to the camera = (0,0,0) - vertex position in View
     vec3 v = normalize(-Position.xyz);
     
-    vec3 r = 2 * diffuseIntensity * Normal - s;
-      
-    float specularIntensity = pow(dot(r, v),3);
+    //normal phong using reflection vector
+    //vec3 r = 2 * diffuseIntensity * Normal - s;
+    
+    //blinn-phong use half way vector h
+    vec3 h = normalize(v + s);
+    
+    // phong
+    //float specularIntensity = pow(dot(r, v), 3);
+    
+    //blinn-phong
+    float specularIntensity = pow(dot(h, Normal), 9);
     
     vec3 specular = specularIntensity * vec3(0.7);
     
-    FragColor = vec4(diffuse + specular, 1.0);
+    vec3 ambient = 0.05 * vec3(1, 1, 1);
+    
+    FragColor = vec4(ambient + diffuse + specular, 1.0);
 
     
 }
