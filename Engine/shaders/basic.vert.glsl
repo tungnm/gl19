@@ -9,7 +9,7 @@ uniform mat3 normalToView;
 uniform mat4 MVP;
 
 out vec3 Color;
-//hello
+
 void main()
 {
 vec3 Kd = vec3(0.9f, 0.5f, 0.3f);

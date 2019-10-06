@@ -10,6 +10,7 @@ link_directories("${PROJECT_SOURCE_DIR}/ThirdParty/assimp/lib/Release")
 
 set (SOURCES
     src/main.cpp
+    src/util.h
     src/util.cpp
     src/ShaderLoader.h
     src/ShaderLoader.cpp

@@ -136,13 +136,13 @@ ShaderManager::~ShaderManager()
 {
     for (auto item : mShaderHandleMap)
     {
-        std::cout << "Delete shader: " << item.first << std::endl;
+        std::cout << "\nDelete shader: " << item.first << std::endl;
         glDeleteShader(item.second);
     }
     
     for (auto item : mProgramHandleMap)
     {
-        std::cout << "Delete program: " << item.first << std::endl;
+        std::cout << "\nDelete shader program: " << item.first << std::endl;
         glDeleteProgram(item.second);
     }
 }
