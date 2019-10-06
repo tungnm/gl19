@@ -45,8 +45,8 @@ int main() {
     }
 
     ShaderManager shaman;
-    shaman.LoadShader("basicVert","basic.vert.glsl", GL_VERTEX_SHADER);
-    shaman.LoadShader("basicFrag","basic.frag.glsl", GL_FRAGMENT_SHADER);
+    shaman.LoadShader("basicVert","phong.vert.glsl", GL_VERTEX_SHADER);
+    shaman.LoadShader("basicFrag","phong.frag.glsl", GL_FRAGMENT_SHADER);
     shaman.CreateProgram("default", "basicVert", "basicFrag");
     
     Mesh m1;
@@ -77,7 +77,7 @@ int main() {
         glm::mat4 mv = view * model;
         glm::mat4 mvp = proj * view * model;
 
-        glm::vec4 lightPosView = mv * glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);
+        glm::vec4 lightPosView = view * glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);
         
   
         GLuint LightPosView = glGetUniformLocation(shaman.GetProgramHandle("default"),
