@@ -45,8 +45,8 @@ int main() {
     }
 
     ShaderManager shaman;
-    shaman.LoadShader("basicVert","phong.vert.glsl", GL_VERTEX_SHADER);
-    shaman.LoadShader("basicFrag","phong.frag.glsl", GL_FRAGMENT_SHADER);
+    shaman.LoadShader("basicVert","cellShade.vert.glsl", GL_VERTEX_SHADER);
+    shaman.LoadShader("basicFrag","cellShade.frag.glsl", GL_FRAGMENT_SHADER);
     shaman.CreateProgram("default", "basicVert", "basicFrag");
     
     Mesh m1;
