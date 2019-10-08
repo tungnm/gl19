@@ -2,18 +2,24 @@
 
 in vec3 Position;
 in vec3 Normal;
+in vec2 TexCord;
 
 out vec4 FragColor;
 
 uniform vec4 LightPosView;
+// texture sampler
+uniform sampler2D Tex1;
 
 void main()
 {
+    //sample texture
+    vec3 texColor = texture(Tex1, TexCord).rgb;
+    
     vec3 s = normalize(LightPosView.xyz - Position);
     
     float diffuseIntensity = dot(s,Normal);
     
-    vec3 diffuse = diffuseIntensity * vec3(0.9f, 0.5f, 0.3f);
+    vec3 diffuse = diffuseIntensity * texColor;//vec3(0.9f, 0.5f, 0.3f);
     
     // since in view space camera is at (0,0,0), the vector from
     // the vertex to the camera = (0,0,0) - vertex position in View

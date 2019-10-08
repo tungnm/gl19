@@ -15,7 +15,6 @@ void delete_assimp_scene_func(const struct aiScene* scene)
     aiReleaseImport(scene);
 }
 
-
 bool Mesh::LoadObjFile(std::string fileName)
 {
     std::string modelPath = "models\\" + fileName;
@@ -33,6 +32,7 @@ bool Mesh::LoadObjFile(std::string fileName)
         return false;
     }
 
+    // this is C++ 11 custom deleter for unique_ptr in action ^^
     std::unique_ptr< const struct aiScene, void(*)(const struct aiScene*)> scenePtr(scene, delete_assimp_scene_func);
 
     const struct aiMesh* mesh = scene->mMeshes[0];
@@ -54,8 +54,8 @@ bool Mesh::LoadObjFile(std::string fileName)
         current += 3;
     }
 
-    // in the order: position, normal, indices
-    glGenBuffers(3, mVboHandles);
+    // in the order: position, normal, indices, texture cord
+    glGenBuffers(4, mVboHandles);
 
     //load position
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
@@ -69,6 +69,20 @@ bool Mesh::LoadObjFile(std::string fileName)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVboHandles[2]);//note that for indice, use GL_ELEMENT_ARRAY_BUFFER instead of GL_ARRAY_BUFFER
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, &indices[0], GL_STATIC_DRAW);
 
+    //load texture coordinates
+    //NOTE: loading image with stb, need to revert the y coordinate!!!
+    std::vector<float> texCoords(sizeof(float) * 2 * mesh->mNumVertices);
+    for (unsigned int k = 0; k < mesh->mNumVertices; ++k)
+    {
+
+        texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
+        texCoords[k * 2 + 1] = -mesh->mTextureCoords[0][k].y;
+
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 2 * sizeof(float), &texCoords[0], GL_STATIC_DRAW);
+
     // VAO is the mapping of which buffer go to which input variable in the vertex shader and how
     glGenVertexArrays(1, &mVaoHandle);
     glBindVertexArray(mVaoHandle);
@@ -76,14 +90,18 @@ bool Mesh::LoadObjFile(std::string fileName)
     // Enable layout=0 input variable in vertex shader
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     // assign position buffer to first input variable of vertex shader(layout = 0)
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    // assign normal buffer to first input variable of vertex shader(layout = 0)
+    // assign normal buffer to second input variable of vertex shader(layout = 1)
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[1]);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     
     std::cout << "Successfully loaded: " << modelPath;
 }

@@ -13,9 +13,18 @@
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
 #include <assimp/postprocess.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 #include "ShaderLoader.h"
 #include "RenderMesh.h"
+
+
+void delete_stb_image_func(unsigned char* image)
+{
+    stbi_image_free(image);
+}
+
 
 int main() {
 
@@ -45,12 +54,44 @@ int main() {
     }
 
     ShaderManager shaman;
-    shaman.LoadShader("basicVert","cellShade.vert.glsl", GL_VERTEX_SHADER);
-    shaman.LoadShader("basicFrag","cellShade.frag.glsl", GL_FRAGMENT_SHADER);
+    shaman.LoadShader("basicVert","phong.vert.glsl", GL_VERTEX_SHADER);
+    shaman.LoadShader("basicFrag","phong.frag.glsl", GL_FRAGMENT_SHADER);
     shaman.CreateProgram("default", "basicVert", "basicFrag");
     
     Mesh m1;
     m1.LoadObjFile("stego.obj");
+
+    // load texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    //load image using stb
+    int width, height, nrChannels;
+    std::unique_ptr<unsigned char, void(*)(unsigned char*)> data(stbi_load("textures\\stego.jpg", &width, &height, &nrChannels, 0)
+        , delete_stb_image_func);
+
+    if (data.get())
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data.get());
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "\n Failed to load texture";
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    int loc = glGetUniformLocation(shaman.GetProgramHandle("default"), "Tex1");
+    glUniform1i(loc, 0);
+
 
     int x = 0;
 

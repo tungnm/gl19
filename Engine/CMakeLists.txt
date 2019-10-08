@@ -49,4 +49,4 @@ add_custom_command(TARGET openGLTest POST_BUILD        # Adds a post-build event
 # copy the shader folder and model folder to the ouput folder
 install (DIRECTORY shaders/ DESTINATION ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/shaders/)
 install (DIRECTORY models/ DESTINATION ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/models/)
-
+install (DIRECTORY textures/ DESTINATION ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/textures/)
