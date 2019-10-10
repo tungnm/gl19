@@ -16,7 +16,7 @@ class Mesh
 {
 
 private:
-    GLuint mVboHandles[4];
+    GLuint mVboHandles[5];
     GLuint mVaoHandle;
     glm::mat4 mModelMatrix;
     unsigned int mIndiceSize;

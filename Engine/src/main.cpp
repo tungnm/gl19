@@ -35,7 +35,7 @@ int main() {
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1024, 768, "Hello World", NULL, NULL);
 
 
     if (!window)
@@ -61,6 +61,7 @@ int main() {
     Mesh m1;
     m1.LoadObjFile("stego.obj");
 
+    glActiveTexture(GL_TEXTURE0);
     // load texture
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -86,12 +87,41 @@ int main() {
         std::cout << "\n Failed to load texture";
     }
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glActiveTexture(GL_TEXTURE1);
+    //load normal map texture
+    // load texture
+    unsigned int textureN;
+    glGenTextures(1, &textureN);
+    glBindTexture(GL_TEXTURE_2D, textureN);
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    int loc = glGetUniformLocation(shaman.GetProgramHandle("default"), "Tex1");
-    glUniform1i(loc, 0);
+    //load image using stb
+    std::unique_ptr<unsigned char, void(*)(unsigned char*)> dataN(stbi_load("textures\\stego_normal.jpg", &width, &height, &nrChannels, 0)
+        , delete_stb_image_func);
 
+    if (dataN.get())
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, dataN.get());
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "\n Failed to load texture";
+    }
+
+    
+
+    GLuint colorTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "Tex1");
+    GLuint normapMapTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "normalMapTex");
+
+    // Then bind the uniform samplers to texture units:
+    glUseProgram(shaman.GetProgramHandle("default"));
+    glUniform1i(colorTex, 0);
+    glUniform1i(normapMapTex, 1);
 
     int x = 0;
 

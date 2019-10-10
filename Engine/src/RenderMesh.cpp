@@ -36,7 +36,7 @@ bool Mesh::LoadObjFile(std::string fileName)
     std::unique_ptr< const struct aiScene, void(*)(const struct aiScene*)> scenePtr(scene, delete_assimp_scene_func);
 
     const struct aiMesh* mesh = scene->mMeshes[0];
-
+    
     /* assimps store indices in a struct of type: {int numIndice, int first, int second, int third}
        This is to support mesh with face of mixed type: ie: quad mixes with triangles. However, we 
        only use triangle only mesh and just need the first, second, third part of the struct.
@@ -53,9 +53,8 @@ bool Mesh::LoadObjFile(std::string fileName)
         memcpy(current, mesh->mFaces[i].mIndices, 3 * sizeof(unsigned int));
         current += 3;
     }
-
     // in the order: position, normal, indices, texture cord
-    glGenBuffers(4, mVboHandles);
+    glGenBuffers(5, mVboHandles);
 
     //load position
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
@@ -79,9 +78,13 @@ bool Mesh::LoadObjFile(std::string fileName)
         texCoords[k * 2 + 1] = -mesh->mTextureCoords[0][k].y;
 
     }
-
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
     glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 2 * sizeof(float), &texCoords[0], GL_STATIC_DRAW);
+
+    //load tangent
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mTangents, GL_STATIC_DRAW);
+
 
     // VAO is the mapping of which buffer go to which input variable in the vertex shader and how
     glGenVertexArrays(1, &mVaoHandle);
@@ -91,6 +94,7 @@ bool Mesh::LoadObjFile(std::string fileName)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
 
     // assign position buffer to first input variable of vertex shader(layout = 0)
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
@@ -100,9 +104,14 @@ bool Mesh::LoadObjFile(std::string fileName)
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[1]);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
+    // assign text coord
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
     
+    // assign tangent
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
     std::cout << "Successfully loaded: " << modelPath;
 }
 
