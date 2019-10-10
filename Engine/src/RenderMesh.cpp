@@ -9,6 +9,9 @@
 #include "Util.h"
 #include <vector>
 #include <iostream>
+#include <glm.hpp>
+
+#include <gtc/matrix_transform.hpp>
 
 void delete_assimp_scene_func(const struct aiScene* scene)
 {
@@ -82,9 +85,32 @@ bool Mesh::LoadObjFile(std::string fileName)
     glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 2 * sizeof(float), &texCoords[0], GL_STATIC_DRAW);
 
     //load tangent
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mTangents, GL_STATIC_DRAW);
+    // calculate handedness for tangent array
+    GLfloat* tang = (GLfloat*)malloc(sizeof(GLfloat) * 4 * mesh->mNumVertices);
+    for (int i = 0; i < mesh->mNumVertices; ++i)
+    {
+        glm::vec3 t = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+        glm::vec3 b = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+        glm::vec3 n = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        
+        glm::mat3 tbn(1.0f); // identity matric
+        tbn[0] = t; //first column
+        tbn[1] = b; //second column
+        tbn[2] = n; //third column
 
+        tang[i * 4] = t.x;
+        tang[i * 4 + 1] = t.y;
+        tang[i * 4 + 2] = t.z;
+        //determine handedness:
+        float handedness = glm::determinant(tbn);
+        //	GLfloat w=( a< 0.0f) ? -1.0f : 1.0f;
+        tang[i * 4 + 3] = handedness < 0 ? -1.0f : 1.0f;
+
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 4 * sizeof(float), tang, GL_STATIC_DRAW);
+
+    delete[] tang;
 
     // VAO is the mapping of which buffer go to which input variable in the vertex shader and how
     glGenVertexArrays(1, &mVaoHandle);
@@ -110,7 +136,7 @@ bool Mesh::LoadObjFile(std::string fileName)
     
     // assign tangent
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
     std::cout << "Successfully loaded: " << modelPath;
 }

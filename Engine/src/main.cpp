@@ -106,14 +106,12 @@ int main() {
     if (dataN.get())
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, dataN.get());
-        glGenerateMipmap(GL_TEXTURE_2D);
+       // glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
     {
         std::cout << "\n Failed to load texture";
     }
-
-    
 
     GLuint colorTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "Tex1");
     GLuint normapMapTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "normalMapTex");
@@ -126,6 +124,9 @@ int main() {
     int x = 0;
 
     glEnable(GL_DEPTH_TEST);
+
+    float li = 0.5;
+    float vec = 0.2;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -148,8 +149,12 @@ int main() {
         glm::mat4 mv = view * model;
         glm::mat4 mvp = proj * view * model;
 
-        glm::vec4 lightPosView = view * glm::vec4(10.0f, 10.0f, 10.0f, 1.0f);
-        
+        glm::vec4 lightPosView = view * glm::vec4(10.0f, 10.0f - li, 10.0f + li, 1.0f);
+        li += vec;
+
+        if (li > 20 ||  li < -20) {
+            vec *= -1;
+        }
   
         GLuint LightPosView = glGetUniformLocation(shaman.GetProgramHandle("default"),
             "LightPosView");

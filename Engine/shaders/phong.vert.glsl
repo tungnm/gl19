@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 VertexPosition;
 layout (location = 1) in vec3 VertexNormal;
 layout (location = 2) in vec2 VertexTexCord;
-layout (location = 3) in vec3 VertexTangent;
+layout (location = 3) in vec4 VertexTangent;
 
 uniform mat4 ModelView;
 uniform mat3 normalToView;
@@ -18,8 +18,8 @@ void main()
 {
     // transform to eye space
     vec3 n = normalize(normalToView * VertexNormal);
-    vec3 tangent = normalize(normalToView * VertexTangent);
-    vec3 bitangent = normalize(cross(n, tangent));
+    vec3 tangent = normalize(normalToView * VertexTangent.xyz);
+    vec3 bitangent = normalize(cross(n, tangent)) * VertexTangent.w;
     vec3 positionEyeSpace = vec3(ModelView * vec4(VertexPosition, 1.0));
     
     //tbn matrix to transform to tangent space:
