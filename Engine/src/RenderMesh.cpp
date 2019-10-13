@@ -138,7 +138,7 @@ bool Mesh::LoadObjFile(std::string fileName)
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    std::cout << "Successfully loaded: " << modelPath;
+    std::cout << "\nSuccessfully loaded: " << modelPath;
 }
 
 Mesh::Mesh()
@@ -150,11 +150,19 @@ Mesh::~Mesh()
 {
     for (int i = 0; i < 3; i++)
     {
-        std::cout << "\nDeleting VBO handle: " << mVboHandles[i];
-        glDeleteBuffers(1, &mVboHandles[i]);
+        if (mVboHandles[i] > 0)
+        {
+            std::cout << "\nDeleting VBO handle: " << mVboHandles[i];
+            glDeleteBuffers(1, &mVboHandles[i]);
+        }
     }
 
-    std::cout << "\nDeleting VAO  handle: " << mVaoHandle;
+    if (mVaoHandle > 0)
+    {
+        std::cout << "\nDeleting VAO  handle: " << mVaoHandle;
+        glDeleteVertexArrays(1, &mVaoHandle);
+    }
+    
 
 }
 

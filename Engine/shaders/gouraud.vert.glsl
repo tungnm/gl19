@@ -17,7 +17,7 @@ void main()
     vec4 vertexPosInView = ModelView * vec4(VertexPosition, 1.0);
     vec3 s = normalize(vec3(LightPosView - vertexPosInView));
     
-    float diffuseIntensity = dot(s,n);
+    float diffuseIntensity = max(0, dot(s,n));
     
     vec3 diffuse = diffuseIntensity * vec3(0.9f, 0.5f, 0.3f);
     
@@ -27,9 +27,9 @@ void main()
     
     vec3 r = 2 * diffuseIntensity * n - s;
       
-    float specularIntensity = pow(dot(r, v),2);
+    float specularIntensity = pow(max(0,dot(r, v)),2);
     
-    vec3 specular = specularIntensity * vec3(0.0);
+    vec3 specular = specularIntensity * vec3(0.8);
     
     Color = diffuse + specular;
     

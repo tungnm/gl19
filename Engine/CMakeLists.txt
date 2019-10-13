@@ -16,6 +16,8 @@ set (SOURCES
     src/ShaderLoader.cpp
     src/RenderMesh.h
     src/RenderMesh.cpp
+    src/Texture.h
+    src/Texture.cpp
     ${PROJECT_SOURCE_DIR}/ThirdParty/glad/src/glad.c
     )
 
