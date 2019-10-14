@@ -18,8 +18,6 @@ set (SOURCES
     src/RenderMesh.cpp
     src/Texture.h
     src/Texture.cpp
-    src/Scene.h
-    src/Scene.cpp
     src/Object.h
     src/Object.cpp
     src/Painter.h
