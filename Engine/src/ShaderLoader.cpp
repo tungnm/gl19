@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 
-bool ShaderManager::LoadShader(string shaderName, string fileName, GLuint shaderType)
+bool ShaderProgram::LoadShader(string shaderName, string fileName, GLuint shaderType)
 {
     if (shaderType != GL_VERTEX_SHADER && shaderType != GL_FRAGMENT_SHADER)
     {
@@ -64,7 +64,7 @@ bool ShaderManager::LoadShader(string shaderName, string fileName, GLuint shader
     return true;
 }
 
-bool ShaderManager::CreateProgram(string programName, string vertexShaderName, string fragmentShaderName)
+bool ShaderProgram::CreateProgram(string vertexShaderName, string fragmentShaderName)
 {
     GLuint programHandle = glCreateProgram();
 
@@ -111,7 +111,7 @@ bool ShaderManager::CreateProgram(string programName, string vertexShaderName, s
     {
         glUseProgram(programHandle);
         
-        mProgramHandleMap[programName] = programHandle;
+        mProgramHandle = programHandle;
 
         glDetachShader(programHandle, mShaderHandleMap[vertexShaderName]);
         glDetachShader(programHandle, mShaderHandleMap[fragmentShaderName]);
@@ -121,18 +121,23 @@ bool ShaderManager::CreateProgram(string programName, string vertexShaderName, s
     return true;
 }
 
-GLuint ShaderManager::GetProgramHandle(string programName)
+GLuint ShaderProgram::GetProgramHandle()
 {
-    return mProgramHandleMap[programName];
+    return mProgramHandle;
 }
 
-ShaderManager::ShaderManager()
+void ShaderProgram::MakeCurrent()
+{
+    glUseProgram(mProgramHandle);
+}
+
+ShaderProgram::ShaderProgram()
 {
     // local path to shader folder
     mShaderFolderPath = "shaders";
 }
 
-ShaderManager::~ShaderManager()
+ShaderProgram::~ShaderProgram()
 {
     for (auto item : mShaderHandleMap)
     {
@@ -140,9 +145,8 @@ ShaderManager::~ShaderManager()
         glDeleteShader(item.second);
     }
     
-    for (auto item : mProgramHandleMap)
-    {
-        std::cout << "\nDelete shader program: " << item.first << std::endl;
-        glDeleteProgram(item.second);
-    }
+
+    std::cout << "\nDelete shader program: " << mProgramHandle << std::endl;
+   glDeleteProgram(mProgramHandle);
+
 }

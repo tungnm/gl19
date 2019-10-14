@@ -18,7 +18,7 @@ void delete_assimp_scene_func(const struct aiScene* scene)
     aiReleaseImport(scene);
 }
 
-bool Mesh::LoadObjFile(std::string fileName)
+bool Mesh::LoadObjFile(std::string fileName, bool needTexCoord, bool needTangent)
 {
     std::string modelPath = "models\\" + fileName;
 
@@ -56,87 +56,91 @@ bool Mesh::LoadObjFile(std::string fileName)
         memcpy(current, mesh->mFaces[i].mIndices, 3 * sizeof(unsigned int));
         current += 3;
     }
+
+    int numberOfBuffer = 3; // pos, normal, indices
+    numberOfBuffer += needTexCoord ? 1 : 0;
+    numberOfBuffer += needTangent ? 1 : 0;
+
+    //todo: bundle all of this into a single VBO?
+    //https://www.khronos.org/opengl/wiki/Vertex_Specification_Best_Practices
+
     // in the order: position, normal, indices, texture cord
-    glGenBuffers(5, mVboHandles);
-
-    //load position
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mVertices, GL_STATIC_DRAW);
-
-    //load normal
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[1]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mNormals, GL_STATIC_DRAW);
-
-    //load face indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVboHandles[2]);//note that for indice, use GL_ELEMENT_ARRAY_BUFFER instead of GL_ARRAY_BUFFER
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, &indices[0], GL_STATIC_DRAW);
-
-    //load texture coordinates
-    //NOTE: loading image with stb, need to revert the y coordinate!!!
-    std::vector<float> texCoords(sizeof(float) * 2 * mesh->mNumVertices);
-    for (unsigned int k = 0; k < mesh->mNumVertices; ++k)
-    {
-
-        texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
-        texCoords[k * 2 + 1] = -mesh->mTextureCoords[0][k].y;
-
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 2 * sizeof(float), &texCoords[0], GL_STATIC_DRAW);
-
-    //load tangent
-    // calculate handedness for tangent array
-    GLfloat* tang = (GLfloat*)malloc(sizeof(GLfloat) * 4 * mesh->mNumVertices);
-    for (int i = 0; i < mesh->mNumVertices; ++i)
-    {
-        glm::vec3 t = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-        glm::vec3 b = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
-        glm::vec3 n = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-        
-        glm::mat3 tbn(1.0f); // identity matric
-        tbn[0] = t; //first column
-        tbn[1] = b; //second column
-        tbn[2] = n; //third column
-
-        tang[i * 4] = t.x;
-        tang[i * 4 + 1] = t.y;
-        tang[i * 4 + 2] = t.z;
-        //determine handedness:
-        float handedness = glm::determinant(tbn);
-        //	GLfloat w=( a< 0.0f) ? -1.0f : 1.0f;
-        tang[i * 4 + 3] = handedness < 0 ? -1.0f : 1.0f;
-
-    }
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
-    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 4 * sizeof(float), tang, GL_STATIC_DRAW);
-
-    delete[] tang;
+    glGenBuffers(numberOfBuffer, mVboHandles);
 
     // VAO is the mapping of which buffer go to which input variable in the vertex shader and how
     glGenVertexArrays(1, &mVaoHandle);
     glBindVertexArray(mVaoHandle);
 
+    //load position
+    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mVertices, GL_STATIC_DRAW);
     // Enable layout=0 input variable in vertex shader
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-
     // assign position buffer to first input variable of vertex shader(layout = 0)
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    // assign normal buffer to second input variable of vertex shader(layout = 1)
+    //load normal
     glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[1]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 3 * sizeof(float), mesh->mNormals, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-    // assign text coord
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[3]);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    //load face indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVboHandles[2]);//note that for indice, use GL_ELEMENT_ARRAY_BUFFER instead of GL_ARRAY_BUFFER
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, &indices[0], GL_STATIC_DRAW);
     
-    // assign tangent
-    glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[4]);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    int index = 3;
+    if (needTexCoord)
+    {
+        //load texture coordinates
+        //NOTE: loading image with stb, need to revert the y coordinate!!!
+        std::vector<float> texCoords(sizeof(float) * 2 * mesh->mNumVertices);
+        for (unsigned int k = 0; k < mesh->mNumVertices; ++k)
+        {
+
+            texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
+            texCoords[k * 2 + 1] = -mesh->mTextureCoords[0][k].y;
+
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[index]);
+        glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 2 * sizeof(float), &texCoords[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+        index++;
+    }
+
+    if (needTangent)
+    {
+        //load tangent
+        // calculate handedness for tangent array
+        GLfloat* tang = (GLfloat*)malloc(sizeof(GLfloat) * 4 * mesh->mNumVertices);
+        for (int i = 0; i < mesh->mNumVertices; ++i)
+        {
+            glm::vec3 t = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            glm::vec3 b = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+            glm::vec3 n = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+
+            glm::mat3 tbn(1.0f); // identity matric
+            tbn[0] = t; //first column
+            tbn[1] = b; //second column
+            tbn[2] = n; //third column
+
+            tang[i * 4] = t.x;
+            tang[i * 4 + 1] = t.y;
+            tang[i * 4 + 2] = t.z;
+            //determine handedness:
+            float handedness = glm::determinant(tbn);
+            //	GLfloat w=( a< 0.0f) ? -1.0f : 1.0f;
+            tang[i * 4 + 3] = handedness < 0 ? -1.0f : 1.0f;
+
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, mVboHandles[index]);
+        glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * 4 * sizeof(float), tang, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+        //todo: C++11-ify this
+        delete[] tang;
+    }
 
     std::cout << "\nSuccessfully loaded: " << modelPath;
 }

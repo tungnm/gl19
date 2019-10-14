@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <glm.hpp>
+#include <memory>
 
 /*
  * This class represents a texture. It is responsible for
@@ -20,4 +22,13 @@ public:
     unsigned int GetTextureUnit();
     Texture();
     ~Texture();
+};
+
+struct Material
+{
+    glm::vec3 mColor;
+    std::shared_ptr<Texture> mDiffuse;
+    std::shared_ptr<Texture> mNormal;
+    std::shared_ptr<Texture> mHeight;
+
 };

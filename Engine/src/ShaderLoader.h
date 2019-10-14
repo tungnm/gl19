@@ -7,13 +7,13 @@
 using std::unordered_map;
 using std::string;
 
-class ShaderManager
+class ShaderProgram
 {
 
 public:
-    ShaderManager();
+    ShaderProgram();
 
-    ~ShaderManager();
+    ~ShaderProgram();
 
     /*
      * fileName: file name of the shader file inside the shaders folder
@@ -24,14 +24,16 @@ public:
     /*
      * programName: A name for the program
      */
-    bool CreateProgram(string programName, string vertexShaderName, string fragmentShaderName);
+    bool CreateProgram(string vertexShaderName, string fragmentShaderName);
 
-    GLuint GetProgramHandle(string programName);
+    GLuint GetProgramHandle();
+
+    void MakeCurrent();
 private:
 
     string mShaderFolderPath;
 
+    GLuint mProgramHandle;
     unordered_map<string, GLuint> mShaderHandleMap;
-    unordered_map<string, GLuint> mProgramHandleMap;
 
 };

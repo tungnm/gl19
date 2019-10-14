@@ -7,6 +7,7 @@ uniform vec4 LightPosView;
 uniform mat4 ModelView;
 uniform mat3 normalToView;
 uniform mat4 MVP;
+uniform vec3 ObjectColor;
 
 out vec3 Color;
 
@@ -19,7 +20,7 @@ void main()
     
     float diffuseIntensity = max(0, dot(s,n));
     
-    vec3 diffuse = diffuseIntensity * vec3(0.9f, 0.5f, 0.3f);
+    vec3 diffuse = diffuseIntensity * ObjectColor;
     
     // since in view space camera is at (0,0,0), the vector from
     // the vertex to the camera = (0,0,0) - vertex position in View
@@ -34,6 +35,5 @@ void main()
     Color = diffuse + specular;
     
     gl_Position = MVP * vec4(VertexPosition,1.0);
-    
     
 }

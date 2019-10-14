@@ -10,7 +10,13 @@
  * The class use Assimp to load the wavefront obj file and
  * upload the mesh data: position, normal, indices, etc..
  * to GPU memory. It keeps track of all buffer handles:
- * vbo handles, vao handles
+ * vbo handles, vao handles.
+
+ * This class assump the shader use the VAO with layout as follow:
+ * - position is at layout = 0
+ * - normal is at layout = 1
+ * - textcord is at layout = 2 (always)
+ * - tangent is at layout = 3 (always, even if texcord is missing)
  */
 class Mesh
 {
@@ -25,10 +31,8 @@ public:
     Mesh();
     ~Mesh();
 
-    bool LoadObjFile(std::string fileName);
-
+    bool LoadObjFile(std::string fileName, bool needTexCoord, bool needTangent);
     void BindBuffers();
-
     unsigned int GetIndiceSize();
 
 };
