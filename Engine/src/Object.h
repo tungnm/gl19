@@ -69,6 +69,7 @@ private:
     static const Camera DEFAULT_CAMERA;
     // keeps track of a list of cameras via names
     std::unordered_map<std::string, Camera> mCameras;
+    glm::mat4 mProjectionMatrix;
     std::vector<Light> mLights;
     std::string mActiveCameraName;
 public:
@@ -82,11 +83,18 @@ public:
 
     bool SetActiveCamera(std::string cameraName);
 
+    // optional, doesn't need to call this one
+    void SetProjectionMatrix(glm::mat4 projMat);
+
+    glm::mat4 GetProjectionMatrix();
+
     void MoveCamera(std::string cameraName, glm::vec3 delta);
 
     Camera GetActiveCamera();
 
-    void AddLight(glm::vec3 position, glm::vec3 color);
+    void AddLight(
+        glm::vec3 position,
+        glm::vec3 color = glm::vec3(0.8, 0.8, 0.8));
 
     std::vector<Light> GetLight();
 

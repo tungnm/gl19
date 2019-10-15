@@ -30,9 +30,27 @@ Object::Object(
 // class and does not handle freeing GPU resource, etc..
 Object::~Object(){}
 
-Stage::Stage() {}
+Stage::Stage()
+{
+    // default projection matrix
+    mProjectionMatrix = glm::perspective(
+        glm::radians(45.0f),
+        4.0f / 3.0f,
+        3.0f,
+        60.0f);
+}
 
 Stage::~Stage() {}
+
+void Stage::SetProjectionMatrix(glm::mat4 projMat)
+{
+    mProjectionMatrix = projMat;
+}
+
+glm::mat4 Stage::GetProjectionMatrix()
+{
+    return mProjectionMatrix;
+}
 
 void Stage::AddCamera(
     std::string cameraName,

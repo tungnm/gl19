@@ -118,6 +118,7 @@ bool ShaderProgram::CreateProgram(string vertexShaderName, string fragmentShader
 
     }
 
+    mProgramName = vertexShaderName + "-" + fragmentShaderName;
     return true;
 }
 
@@ -149,4 +150,60 @@ ShaderProgram::~ShaderProgram()
     std::cout << "\nDelete shader program: " << mProgramHandle << std::endl;
    glDeleteProgram(mProgramHandle);
 
+}
+
+std::string ShaderProgram::GetProgramName()
+{
+    return mProgramName;
+}
+
+void ShaderProgram::SendVec3Uniform(std::string uniformName, glm::vec3 value)
+{
+    GLint uniformLocation = glGetUniformLocation(mProgramHandle,
+        uniformName.c_str());
+
+    if (uniformLocation < 0)
+    {
+        std::cout << "\nError: " << mProgramName << "could not locate shader uniform: " << uniformName;
+        return;
+    }
+
+    glUniform3fv(uniformLocation, 1, glm::value_ptr(value));
+}
+
+void ShaderProgram::SendVec4Uniform(std::string uniformName, glm::vec4 value)
+{
+    GLint uniformLocation = glGetUniformLocation(mProgramHandle,
+        uniformName.c_str());
+    if (uniformLocation < 0)
+    {
+        std::cout << "\nError: " << mProgramName << "could not locate shader uniform: " << uniformName;
+        return;
+    }
+    glUniform4fv(uniformLocation, 1, glm::value_ptr(value));
+}
+
+void ShaderProgram::SendMat4Uniform(std::string uniformName, glm::mat4 value)
+{
+    GLint uniformLocation = glGetUniformLocation(mProgramHandle,
+        uniformName.c_str());
+    if (uniformLocation < 0)
+    {
+        std::cout << "\nError: " << mProgramName << "could not locate shader uniform: " << uniformName;
+        return;
+    }
+    glUniformMatrix4fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void ShaderProgram::SendMat3Uniform(std::string uniformName, glm::mat3 value)
+{
+    GLint uniformLocation = glGetUniformLocation(mProgramHandle,
+        uniformName.c_str());
+    if (uniformLocation < 0)
+    {
+        std::cout << "\nError: " << mProgramName << "could not locate shader uniform: " << uniformName;
+        return;
+    }
+
+    glUniformMatrix3fv(uniformLocation, 1, GL_FALSE, glm::value_ptr(value));
 }

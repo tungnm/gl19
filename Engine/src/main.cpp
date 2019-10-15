@@ -26,6 +26,7 @@ glm::vec3 camVec(0, 0, 0);
 Stage stage1;
 Physical dinoPhysical;
 unsigned int dinoRotateDegree = 0;
+int dinoRotateVelo = 1;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -45,6 +46,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     {
         camVec = glm::vec3(0, -0.05, 0);
     }
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    {
+        // stop/ start rotating the dino
+        dinoRotateVelo = dinoRotateVelo == 0 ? 1 : 0;
+    }
     else if (action == GLFW_RELEASE)
     {
         camVec = glm::vec3(0, 0, 0);
@@ -54,7 +60,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void gameLogic()
 {
     stage1.MoveCamera("mainCam", camVec);
-    dinoRotateDegree = (dinoRotateDegree + 1) % 360;
+    dinoRotateDegree = (dinoRotateDegree + dinoRotateVelo) % 360;
     dinoPhysical.mOrientationDegree = (float)dinoRotateDegree;
 }
 
@@ -84,31 +90,41 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    /*
     Texture dinoDiffuse;
     dinoDiffuse.LoadSingleImage("stego.jpg");
 
     Texture dinoNormal;
     dinoNormal.LoadSingleImage("stego_normal.jpg");
+    */
 
     Mesh m1;
-    m1.LoadObjFile("stego.obj", true, true);
+    m1.LoadObjFile("stego.obj", false, false);
 
     Mesh m2;
     m2.LoadObjFile("box.obj", false, false);
 
     dinoPhysical = {glm::vec3(0,0,0), 0, glm::vec3(0.15f ,0.15f ,0.15f )};
-    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
+    //Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
+    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f));
 
     Physical boxPhysical{ glm::vec3(0.0, -50, 0.0), 0, glm::vec3(0.3f, 0.05f, 0.3f) };
     Object box(&boxPhysical, &m2, glm::vec3(0.3f, 0.5f, 0.9f));
 
+    Physical box2Physical{ glm::vec3(80, -20, 80), 0, glm::vec3(0.02f, 0.08f, 0.02f) };
+    Object box2(&box2Physical, &m2, glm::vec3(0.3f, 0.9f, 0.5f));
+
     GouraudPainter goraud;
     goraud.Init();
     goraud.AssignObjects(&box);
+    goraud.AssignObjects(&box2);
 
-    PhongNormalMapPainter phong;
-    phong.Init();
-    phong.AssignObjects(&dino);
+    //PhongNormalMapPainter phong;
+    //phong.Init();
+    goraud.AssignObjects(&dino);
     
 
     glm::vec3 camPos(2, 1, 5);
@@ -116,43 +132,28 @@ int main() {
 
     stage1.AddCamera("mainCam", glm::vec3(2, 1, 5), glm::vec3(0, 0, 0));
     stage1.AddLight(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.8, 0.8, 0.8));
-    
-    goraud.AssignStage(&stage1);
-    phong.AssignStage(&stage1);
+    stage1.SetProjectionMatrix(
+        glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 3.0f, 20.0f)
 
-    /*
-    GLuint colorTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "Tex1");
-    GLuint normapMapTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "normalMapTex");
-    GLuint heightMapTex = glGetUniformLocation(shaman.GetProgramHandle("default"), "heightMapTex");
-    */
-    // Then bind the uniform samplers to texture units:
-    //glUseProgram(shaman.GetProgramHandle());
-    /*
-    glUniform1i(colorTex, diffuse.GetTextureUnit());
-    glUniform1i(normapMapTex, normal.GetTextureUnit());
-    glUniform1i(heightMapTex, height.GetTextureUnit());
-    */
-    
+    );
+    goraud.AssignStage(&stage1);
+    //phong.AssignStage(&stage1);
 
     glEnable(GL_DEPTH_TEST);
-
 
     glfwSetKeyCallback(window, key_callback);
 
 
-    float li = 0;// 0.5;
-    float vec = 0;// 0.1;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-
         gameLogic();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
         
         goraud.DrawObjects();
 
-        phong.DrawObjects();
+        //phong.DrawObjects();
         glfwSwapBuffers(window);
 
         /* Poll for and process events */

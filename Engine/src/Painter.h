@@ -7,6 +7,7 @@ class Painter
 {
 private:
     void BindTextureIfExist(std::string textureNameInShader, Texture* texture);
+    
 protected:
 
     // Common painter functionalities:
@@ -14,26 +15,15 @@ protected:
     // This method calculate object's MV, MVP, normalMatrix
     // and send them to the shader. It also bind the object
     // VAO. It also bind texture channel if available in the object Material
-    void PrepareObjectForRender(Object* obj);
+    void PrepareObjectForRender(
+        ShaderProgram* shader,
+        Object* obj,
+        Stage* stage);
+
+    glm::mat4 CalculateMVP(Object* obj, Stage* stage);
 
     void RenderObject(Object* obj);
-
     
-
-    void SendVec3UniformToShader(
-        std::string uniformName,
-        glm::vec3 value);
-    void SendVec4UniformToShader(
-        std::string uniformName,
-        glm::vec4 value);
-    void SendMat4UniformToShader(
-        std::string uniformName,
-        glm::mat4 value);
-    void SendMat3UniformToShader(
-        std::string uniformName,
-        glm::mat3 value);
-
-
     std::vector<Object* > mObjects;
     Stage* mStage;
     ShaderProgram mShaderProgram;
@@ -53,6 +43,12 @@ public:
 
 class GouraudPainter : public Painter
 {
+private:
+    unsigned int depthMapFBO;
+    unsigned int depthMap;
+    // shader to render depth map from light view
+    ShaderProgram mDepthShader;
+
 public:
     void DrawObjects();
     void Init();
