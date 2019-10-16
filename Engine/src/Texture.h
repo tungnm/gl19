@@ -19,7 +19,7 @@ private:
 
 public:
     bool LoadSingleImage(std::string filePath);
-    unsigned int GetTextureUnit();
+    unsigned int GetTextureHandle();
     Texture();
     ~Texture();
 };

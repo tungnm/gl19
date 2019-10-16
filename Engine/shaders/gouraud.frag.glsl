@@ -3,7 +3,8 @@
 in vec3 Color;
 in vec4 FragPosLightSpace;
 in float bias;
-uniform sampler2D shadowMap;
+
+layout (binding=2) uniform sampler2D shadowMap;
 
 out vec4 FragColor;
 

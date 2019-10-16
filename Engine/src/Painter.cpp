@@ -12,29 +12,26 @@ void Painter::AssignStage(Stage* stage)
     mStage = stage;
 }
 
-void Painter::BindTextureIfExist(std::string textureNameInShader, Texture* texture)
+
+void Painter::BindTextureIfExist(int shaderTextureUnit, Texture* texture)
 {
-    // todo: right now send texture to shader if texture exists in the Object
-    // should do the otherway around: need to associate which texture a shader
-    // needs, and then look for that in the object
-    // check if the object Material contains any texture. Bind if any exist
     if (texture != nullptr)
     {
-        GLint textureLocationInShader = glGetUniformLocation(
-            mShaderProgram.GetProgramHandle(),
-            textureNameInShader.c_str());
-        if (textureLocationInShader < 0) {
-            std::cout << "\nError: texture unit name " << textureNameInShader << " not found in shader";
-            return;
-        }
-        else
-        {
-            glUniform1i(textureLocationInShader, texture->GetTextureUnit());
-        }
+        glActiveTexture(GL_TEXTURE0 + shaderTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, texture->GetTextureHandle());
     }
 }
 
-void Painter::PrepareObjectForRender(
+void Painter::BindTextureIfExist(int shaderTextureUnit, GLuint textureHandle)
+{
+    if (textureHandle > 0)
+    {
+        glActiveTexture(GL_TEXTURE0 + shaderTextureUnit);
+        glBindTexture(GL_TEXTURE_2D, textureHandle);
+    }
+}
+
+void Painter::CalculateAndSendObjectUniforms(
     ShaderProgram* shader,
     Object* obj,
     Stage* stage)
@@ -58,22 +55,26 @@ void Painter::PrepareObjectForRender(
 
     // send per object uniform to shaders
 
-    if (!mSkipUniforms[LightPosViewEnum]) shader->SendVec4Uniform("LightPosView", lightPosView);
-    if (!mSkipUniforms[ModelViewEnum])shader->SendMat4Uniform("ModelView", mv);
-    if (!mSkipUniforms[normalToViewEnum])shader->SendMat3Uniform(
+    shader->SendVec4Uniform("LightPosView", lightPosView);
+    shader->SendMat4Uniform("ModelView", mv);
+    shader->SendMat3Uniform(
         "normalToView",
         glm::inverseTranspose(glm::mat3(glm::vec3(mv[0]), glm::vec3(mv[1]), glm::vec3(mv[2]))));
-    if (!mSkipUniforms[MVPEnum])shader->SendMat4Uniform("MVP", mvp);
+    shader->SendMat4Uniform("MVP", mvp);
     
+}
+
+void Painter::BindObjectVaoAndTexture(Object* obj)
+{
     // bind VAO
     obj->mMesh->BindBuffers();
-    
-    // todo: fix this texture binding per object
-    // bind texture(s)
-    //BindTextureIfExist("DiffuseTexture", obj->mMaterial.mDiffuse);
-    //BindTextureIfExist("NormalMapTexture", obj->mMaterial.mNormal);
 
- }
+    // bind texture(s)
+    // always assume that, in shader code texture unit 0 is for diffuse sampler
+    // texture unit 1 is for normal sampler
+    BindTextureIfExist(0, obj->mMaterial.mDiffuse);
+    BindTextureIfExist(1, obj->mMaterial.mNormal);
+}
 
 void Painter::RenderObject(Object* obj)
 {
@@ -87,15 +88,10 @@ void Painter::RenderObject(Object* obj)
 Painter::Painter(Stage* stage) 
     : mStage(stage) 
 {
-        mSkipUniforms = std::vector<bool>(4, false);
+       
 }
 
 Painter::~Painter() {}
-
-void Painter::SkipCommonUniformToSendPerObject(CommonUniform s)
-{
-    mSkipUniforms[s] = true;
-}
 
 glm::mat4 Painter::CalculateMVP(Object* obj, Stage* stage)
 {
@@ -114,6 +110,11 @@ glm::mat4 Painter::CalculateMVP(Object* obj, Stage* stage)
 
 void GouraudPainter::DrawObjects()
 {
+    if (mStage == nullptr)
+    {
+        std::cout << "\nDrawObjects: mStage is null";
+        return;
+    }
     mDepthShader.MakeCurrent();
     
     // first pass shadow
@@ -135,22 +136,27 @@ void GouraudPainter::DrawObjects()
 
     for (auto obj : mObjects)
     {
-        // setup matrics, uniform, bind VAO.., common for all painters
-        PrepareObjectForRender(&mDepthShader, obj, &lightStage);
+        // shadow vert shader only need MVP to transform to light space, no need
+        // to use the common CalculateAndSendObjectUniforms, which send
+        // M, MV, MVP.
+        glm::mat4 lightMVP = CalculateMVP(obj, &lightStage);
+        mDepthShader.SendMat4Uniform("MVP", lightMVP);
+        BindObjectVaoAndTexture(obj);
          
         // common render method
         RenderObject(obj);
     }
     
     // second pass
-    //mStage->SetActiveCamera("mainCam");
+    
     mShaderProgram.MakeCurrent();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, 1024, 768);
     //glBindTexture()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+    // assume that depth map sampler is using texture unit 2 in shader(layout (binding=2))
+    BindTextureIfExist(2, depthMapTextureHandle);
 
     for (auto obj : mObjects)
     {
@@ -159,12 +165,10 @@ void GouraudPainter::DrawObjects()
         mShaderProgram.SendMat4Uniform("LightMVP", lightMVP);
        
         // setup matrics, uniform, bind VAO.., common for all painters
-        PrepareObjectForRender(&mShaderProgram, obj, mStage);
+        CalculateAndSendObjectUniforms(&mShaderProgram, obj, mStage);
+        BindObjectVaoAndTexture(obj);
         // painter specific logic: Gouraud need only color per object
         mShaderProgram.SendVec3Uniform("ObjectColor", obj->mMaterial.mColor);
-
-        
-        glBindTexture(GL_TEXTURE_2D, depthMap);
 
         // common render method
         RenderObject(obj);
@@ -192,8 +196,8 @@ void GouraudPainter::Init()
     // Next we create a 2D texture that we'll use as the framebuffer's depth buffer:
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 768;
 
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glGenTextures(1, &depthMapTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, depthMapTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
         SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -203,7 +207,7 @@ void GouraudPainter::Init()
 
     //With the generated depth texture we can attach it as the framebuffer's depth buffer:
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTextureHandle, 0);
     
     /*
     A framebuffer object however is not complete without a color buffer so
@@ -236,8 +240,8 @@ void PhongNormalMapPainter::DrawObjects()
     for (auto obj : mObjects)
     {
         // setup matrics, uniform, bind VAO.., common for all painters
-        PrepareObjectForRender(&mShaderProgram, obj, mStage);
-       
+        CalculateAndSendObjectUniforms(&mShaderProgram, obj, mStage);
+        BindObjectVaoAndTexture(obj);
         // common render method
         RenderObject(obj);
     }

@@ -11,7 +11,6 @@ using std::string;
 
 class ShaderProgram
 {
-
 public:
     ShaderProgram();
 

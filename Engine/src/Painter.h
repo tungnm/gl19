@@ -5,16 +5,12 @@
 #include "ShaderLoader.h"
 class Painter
 {
-private:
-    void BindTextureIfExist(std::string textureNameInShader, Texture* texture);
-    
+ 
 protected:
 
-    enum CommonUniform { LightPosViewEnum, ModelViewEnum, normalToViewEnum, MVPEnum};
+    void BindTextureIfExist(int shaderTextureUnit, Texture* texture);
+    void BindTextureIfExist(int shaderTextureUnit, GLuint textureHandle);
 
-    void SkipCommonUniformToSendPerObject(CommonUniform s);
-
-    std::vector<bool> mSkipUniforms;
     // Common painter functionalities:
 
     // * combine object's model matrix with stage's camera view, projection matrix
@@ -26,10 +22,12 @@ protected:
     //  2. uniform mat4 ModelView: the model view matrix = view matrix( from stage'scamera) * model matrix(from object)
     //  3. uniform mat3 normalToView: the normal transformation matrix, built from ModelView matrix in 2.
     //  4. uniform mat4 MVP: the modelViewProjection matrix, built from ModelView above * stage's projectionMatrix
-    void PrepareObjectForRender(
+    void CalculateAndSendObjectUniforms(
         ShaderProgram* shader,
         Object* obj,
         Stage* stage);
+
+    void BindObjectVaoAndTexture(Object* obj);
 
     glm::mat4 CalculateMVP(Object* obj, Stage* stage);
 
@@ -56,7 +54,7 @@ class GouraudPainter : public Painter
 {
 private:
     unsigned int depthMapFBO;
-    unsigned int depthMap;
+    unsigned int depthMapTextureHandle;
     // shader to render depth map from light view
     ShaderProgram mDepthShader;
 

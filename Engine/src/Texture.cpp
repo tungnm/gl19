@@ -22,7 +22,7 @@ bool Texture::LoadSingleImage(std::string filePath)
         return false;
     }
 
-    glActiveTexture(GL_TEXTURE0 + mCurrentTextureUnit);
+    //glActiveTexture(GL_TEXTURE0 + mCurrentTextureUnit);
     // load texture
 
     glGenTextures(1, &mTextureHandle);
@@ -67,7 +67,7 @@ Texture::~Texture()
     }
 }
 
-unsigned int Texture::GetTextureUnit()
+unsigned int Texture::GetTextureHandle()
 {
-    return mTextureUnit;
+    return mTextureHandle;
 }

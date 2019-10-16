@@ -93,23 +93,23 @@ int main() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    /*
+    
     Texture dinoDiffuse;
     dinoDiffuse.LoadSingleImage("stego.jpg");
 
     Texture dinoNormal;
     dinoNormal.LoadSingleImage("stego_normal.jpg");
-    */
+    
 
     Mesh m1;
-    m1.LoadObjFile("stego.obj", false, false);
+    m1.LoadObjFile("stego.obj", true, true);
 
     Mesh m2;
     m2.LoadObjFile("box.obj", false, false);
 
     dinoPhysical = {glm::vec3(0,0,0), 0, glm::vec3(0.15f ,0.15f ,0.15f )};
-    //Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
-    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f));
+    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
+    //Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f));
 
     Physical boxPhysical{ glm::vec3(0.0, -50, 0.0), 0, glm::vec3(0.3f, 0.05f, 0.3f) };
     Object box(&boxPhysical, &m2, glm::vec3(0.3f, 0.5f, 0.9f));
@@ -122,9 +122,10 @@ int main() {
     goraud.AssignObjects(&box);
     goraud.AssignObjects(&box2);
 
-    //PhongNormalMapPainter phong;
-    //phong.Init();
-    goraud.AssignObjects(&dino);
+    PhongNormalMapPainter phong;
+    phong.Init();
+    //goraud.AssignObjects(&dino);
+    phong.AssignObjects(&dino);
     
 
     glm::vec3 camPos(2, 1, 5);
@@ -137,7 +138,7 @@ int main() {
 
     );
     goraud.AssignStage(&stage1);
-    //phong.AssignStage(&stage1);
+    phong.AssignStage(&stage1);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -153,7 +154,7 @@ int main() {
         
         goraud.DrawObjects();
 
-        //phong.DrawObjects();
+        phong.DrawObjects();
         glfwSwapBuffers(window);
 
         /* Poll for and process events */

@@ -7,8 +7,10 @@ in vec2 TexCord;
 out vec4 FragColor;
 
 // texture sampler
-uniform sampler2D DiffuseTexture;
-uniform sampler2D NormalMapTexture;
+// layout (binding=0) set the texture unit 0 for this sampler2D DiffuseTexture
+layout (binding=0) uniform sampler2D DiffuseTexture;
+// layout (binding=1) set the texture unit 1 for this sampler2D NormalMapTexture
+layout (binding=1)uniform sampler2D NormalMapTexture;
 
 void main()
 {
