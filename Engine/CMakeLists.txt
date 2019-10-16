@@ -22,6 +22,8 @@ set (SOURCES
     src/Object.cpp
     src/Painter.h
     src/Painter.cpp
+    src/DeferredPainter.h
+    src/DeferredPainter.cpp
     ${PROJECT_SOURCE_DIR}/ThirdParty/glad/src/glad.c
     )
 
