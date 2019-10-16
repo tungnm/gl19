@@ -15,8 +15,6 @@ protected:
 
     // * combine object's model matrix with stage's camera view, projection matrix
     // * send those matrix to shader
-    // * bind object VAO
-    // * bind object texture
     // This function ASSUMES that all Shaders will use uniform with those names:
     //  1. uniform vec4 LightPosView: the light position in View space
     //  2. uniform mat4 ModelView: the model view matrix = view matrix( from stage'scamera) * model matrix(from object)
@@ -27,6 +25,9 @@ protected:
         Object* obj,
         Stage* stage);
 
+    // * bind object VAO
+    // * bind object texture
+    // This should be called before glDraw* call
     void BindObjectVaoAndTexture(Object* obj);
 
     glm::mat4 CalculateMVP(Object* obj, Stage* stage);

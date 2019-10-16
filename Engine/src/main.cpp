@@ -144,7 +144,6 @@ int main() {
 
     glfwSetKeyCallback(window, key_callback);
 
-
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {

@@ -117,9 +117,11 @@ void GouraudPainter::DrawObjects()
     }
     mDepthShader.MakeCurrent();
     
+    // todo: maybe have this pass as a separate painter, to reuse
+    // the shadow map for other shading, ie: Phong with shadow map?
     // first pass shadow
     // 1. first render to depth map
-    glViewport(0, 0, 1024, 768);
+    glViewport(0, 0, 1280, 960);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -148,7 +150,6 @@ void GouraudPainter::DrawObjects()
     }
     
     // second pass
-    
     mShaderProgram.MakeCurrent();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, 1024, 768);
@@ -194,7 +195,7 @@ void GouraudPainter::Init()
     glGenFramebuffers(1, &depthMapFBO);
 
     // Next we create a 2D texture that we'll use as the framebuffer's depth buffer:
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 768;
+    const unsigned int SHADOW_WIDTH = 1280, SHADOW_HEIGHT = 960;
 
     glGenTextures(1, &depthMapTextureHandle);
     glBindTexture(GL_TEXTURE_2D, depthMapTextureHandle);
