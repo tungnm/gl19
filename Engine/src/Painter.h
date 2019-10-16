@@ -14,7 +14,7 @@ protected:
 
     void SkipCommonUniformToSendPerObject(CommonUniform s);
 
-    vector<bool> mSkipUniforms;
+    std::vector<bool> mSkipUniforms;
     // Common painter functionalities:
 
     // * combine object's model matrix with stage's camera view, projection matrix

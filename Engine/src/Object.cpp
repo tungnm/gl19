@@ -69,9 +69,9 @@ void Stage::SetCamera(
     mCamera.mTarget = cameraTarget;
 }
 
-void Stage::MoveCamera(std::string cameraName, glm::vec3 delta)
+void Stage::MoveCamera(glm::vec3 delta)
 {
-    mCameras[cameraName].mPosition += delta;
+    mCamera.mPosition += delta;
 }
 
 Camera Stage::GetCamera()

@@ -59,7 +59,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void gameLogic()
 {
-    stage1.MoveCamera("mainCam", camVec);
+    stage1.MoveCamera(camVec);
     dinoRotateDegree = (dinoRotateDegree + dinoRotateVelo) % 360;
     dinoPhysical.mOrientationDegree = (float)dinoRotateDegree;
 }
@@ -130,7 +130,7 @@ int main() {
     glm::vec3 camPos(2, 1, 5);
     glm::vec3 camLook(0, 0, 0);
 
-    stage1.AddCamera("mainCam", glm::vec3(2, 1, 5), glm::vec3(0, 0, 0));
+    stage1.SetCamera(glm::vec3(2, 1, 5), glm::vec3(0, 0, 0));
     stage1.AddLight(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.8, 0.8, 0.8));
     stage1.SetProjectionMatrix(
         glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 3.0f, 20.0f)

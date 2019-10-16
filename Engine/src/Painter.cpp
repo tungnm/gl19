@@ -41,8 +41,8 @@ void Painter::PrepareObjectForRender(
 {
     // stage prepare: grab view matrix and projection matrix from mStage
     glm::mat4 view = glm::lookAt(
-        stage->GetActiveCamera().mPosition, // camera pos in world space
-        stage->GetActiveCamera().mTarget, // camera target
+        stage->GetCamera().mPosition, // camera pos in world space
+        stage->GetCamera().mTarget, // camera target
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
 
@@ -87,7 +87,7 @@ void Painter::RenderObject(Object* obj)
 Painter::Painter(Stage* stage) 
     : mStage(stage) 
 {
-        mSkipUniforms = vector<bool>(4, false);
+        mSkipUniforms = std::vector<bool>(4, false);
 }
 
 Painter::~Painter() {}
@@ -100,8 +100,8 @@ void Painter::SkipCommonUniformToSendPerObject(CommonUniform s)
 glm::mat4 Painter::CalculateMVP(Object* obj, Stage* stage)
 {
     glm::mat4 view = glm::lookAt(
-        stage->GetActiveCamera().mPosition, // camera pos in world space
-        stage->GetActiveCamera().mTarget, // camera target
+        stage->GetCamera().mPosition, // camera pos in world space
+        stage->GetCamera().mTarget, // camera target
         glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
     );
 
@@ -126,7 +126,7 @@ void GouraudPainter::DrawObjects()
     // also set the projection matrix for the light view to be very tight,
     // to increase precision for z buffer.
     Stage lightStage;
-    lightStage.AddCamera("test", mStage->GetLight()[0].mPositon, glm::vec3(0,0,0));
+    lightStage.SetCamera(mStage->GetLight()[0].mPositon, glm::vec3(0,0,0));
     lightStage.AddLight(glm::vec3(10, 10, 10));
     lightStage.SetProjectionMatrix(
                                                               // tight frustum
