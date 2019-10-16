@@ -10,11 +10,22 @@ private:
     
 protected:
 
+    enum CommonUniform { LightPosViewEnum, ModelViewEnum, normalToViewEnum, MVPEnum};
+
+    void SkipCommonUniformToSendPerObject(CommonUniform s);
+
+    vector<bool> mSkipUniforms;
     // Common painter functionalities:
 
-    // This method calculate object's MV, MVP, normalMatrix
-    // and send them to the shader. It also bind the object
-    // VAO. It also bind texture channel if available in the object Material
+    // * combine object's model matrix with stage's camera view, projection matrix
+    // * send those matrix to shader
+    // * bind object VAO
+    // * bind object texture
+    // This function ASSUMES that all Shaders will use uniform with those names:
+    //  1. uniform vec4 LightPosView: the light position in View space
+    //  2. uniform mat4 ModelView: the model view matrix = view matrix( from stage'scamera) * model matrix(from object)
+    //  3. uniform mat3 normalToView: the normal transformation matrix, built from ModelView matrix in 2.
+    //  4. uniform mat4 MVP: the modelViewProjection matrix, built from ModelView above * stage's projectionMatrix
     void PrepareObjectForRender(
         ShaderProgram* shader,
         Object* obj,

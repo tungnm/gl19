@@ -58,12 +58,12 @@ void Painter::PrepareObjectForRender(
 
     // send per object uniform to shaders
 
-    shader->SendVec4Uniform("LightPosView", lightPosView);
-    shader->SendMat4Uniform("ModelView", mv);
-    shader->SendMat3Uniform(
+    if (!mSkipUniforms[LightPosViewEnum]) shader->SendVec4Uniform("LightPosView", lightPosView);
+    if (!mSkipUniforms[ModelViewEnum])shader->SendMat4Uniform("ModelView", mv);
+    if (!mSkipUniforms[normalToViewEnum])shader->SendMat3Uniform(
         "normalToView",
         glm::inverseTranspose(glm::mat3(glm::vec3(mv[0]), glm::vec3(mv[1]), glm::vec3(mv[2]))));
-    shader->SendMat4Uniform("MVP", mvp);
+    if (!mSkipUniforms[MVPEnum])shader->SendMat4Uniform("MVP", mvp);
     
     // bind VAO
     obj->mMesh->BindBuffers();
@@ -85,9 +85,17 @@ void Painter::RenderObject(Object* obj)
 }
 
 Painter::Painter(Stage* stage) 
-    : mStage(stage) {}
+    : mStage(stage) 
+{
+        mSkipUniforms = vector<bool>(4, false);
+}
 
 Painter::~Painter() {}
+
+void Painter::SkipCommonUniformToSendPerObject(CommonUniform s)
+{
+    mSkipUniforms[s] = true;
+}
 
 glm::mat4 Painter::CalculateMVP(Object* obj, Stage* stage)
 {

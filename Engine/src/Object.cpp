@@ -38,6 +38,10 @@ Stage::Stage()
         4.0f / 3.0f,
         3.0f,
         60.0f);
+
+    // default camera
+    mCamera.mPosition = glm::vec3(6,6,6);
+    mCamera.mTarget = glm::vec3(0,0,0);
 }
 
 Stage::~Stage() {}
@@ -52,30 +56,17 @@ glm::mat4 Stage::GetProjectionMatrix()
     return mProjectionMatrix;
 }
 
-void Stage::AddCamera(
-    std::string cameraName,
+void Stage::SetCamera(
     glm::vec3 cameraPosition,
     glm::vec3 cameraTarget)
 {
-    if (mCameras.empty())
-    {
-        mActiveCameraName = cameraName;
-    }
+
     Camera newCamera;
     newCamera.mPosition = cameraPosition;
     newCamera.mTarget = cameraTarget;
 
-    mCameras[cameraName] = newCamera;
-}
-
-bool Stage::SetActiveCamera(std::string cameraName)
-{
-    if (mCameras.count(cameraName) == 0)
-    {
-        std::cout << "\nError: Camera " << cameraName << " does not exist.";
-        return false;
-    }
-    mActiveCameraName = cameraName;
+    mCamera.mPosition = cameraPosition;
+    mCamera.mTarget = cameraTarget;
 }
 
 void Stage::MoveCamera(std::string cameraName, glm::vec3 delta)
@@ -83,9 +74,9 @@ void Stage::MoveCamera(std::string cameraName, glm::vec3 delta)
     mCameras[cameraName].mPosition += delta;
 }
 
-Camera Stage::GetActiveCamera()
+Camera Stage::GetCamera()
 {
-    return mCameras[mActiveCameraName];
+    return mCamera;
 }
 
 void Stage::AddLight(glm::vec3 position, glm::vec3 color)

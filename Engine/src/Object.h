@@ -60,37 +60,30 @@ struct Light
 
 /*
     This class represent a stage:
-    A list of cameras where one is active
-    a list of lights that light up object in the stage
+    Imagine a film set when each stage for filming has a camera, 
+    and the lighting setup to light the actor/ scene
 */
 class Stage
 {
 private:
-    static const Camera DEFAULT_CAMERA;
-    // keeps track of a list of cameras via names
-    std::unordered_map<std::string, Camera> mCameras;
+    Camera mCamera;
     glm::mat4 mProjectionMatrix;
     std::vector<Light> mLights;
-    std::string mActiveCameraName;
 public:
     Stage();
     ~Stage();
 
-    void AddCamera(
-        std::string cameraName,
-        glm::vec3 cameraPosition,
-        glm::vec3 cameraTarget);
-
-    bool SetActiveCamera(std::string cameraName);
-
     // optional, doesn't need to call this one
     void SetProjectionMatrix(glm::mat4 projMat);
-
     glm::mat4 GetProjectionMatrix();
 
-    void MoveCamera(std::string cameraName, glm::vec3 delta);
+    void SetCamera(
+        glm::vec3 cameraPosition,
+        glm::vec3 cameraTarget
+    );
+    void MoveCamera(glm::vec3 delta);
 
-    Camera GetActiveCamera();
+    Camera GetCamera();
 
     void AddLight(
         glm::vec3 position,
