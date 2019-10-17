@@ -29,7 +29,7 @@ void main()
     tangent.z, bitangent.z, n.z);
     
     // transform to tangent space:
-    sTanSpace = tbn * (LightPosView.xyz - positionEyeSpace);
+    sTanSpace = tbn * (LightPosView.xyz - positionEyeSpace); 
     vTanSpace = tbn * normalize(-positionEyeSpace);
     
     TexCord = VertexTexCord;

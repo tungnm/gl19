@@ -30,11 +30,13 @@ class DeferredPhongPainter : public Painter
 private:
     // handle to frame buffer(G-buffer)
     GBuffer mGBuffer;
+    Mesh* mQuadMesh;
+    
 public:
     void DrawObjects();
     void Init();
     
-    // This Phong painter needs a GBuffer to paint
-    DeferredPhongPainter(GBuffer gBuffer);
+    // This Phong painter needs a GBuffer, and a quad mesh to paint
+    DeferredPhongPainter(GBuffer gBuffer, Mesh* quadMesh);
     ~DeferredPhongPainter();
 };

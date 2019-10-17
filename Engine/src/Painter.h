@@ -8,8 +8,8 @@ class Painter
  
 protected:
 
-    void BindTextureIfExist(int shaderTextureUnit, Texture* texture);
-    void BindTextureIfExist(int shaderTextureUnit, GLuint textureHandle);
+    void BindToTextureUnit(int shaderTextureUnit, Texture* texture);
+    void BindToTextureUnit(int shaderTextureUnit, GLuint textureHandle);
 
     // Common painter functionalities:
 

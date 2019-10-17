@@ -21,6 +21,7 @@
 #include "Texture.h"
 #include "Object.h"
 #include "Painter.h"
+#include "DeferredPainter.h"
 
 glm::vec3 camVec(0, 0, 0);
 Stage stage1;
@@ -102,14 +103,18 @@ int main() {
     
 
     Mesh m1;
-    m1.LoadObjFile("stego.obj", true, true);
+    //m1.LoadObjFile("stego.obj", true, true);
+    m1.LoadObjFile("stego.obj", false , false);
 
     Mesh m2;
     m2.LoadObjFile("box.obj", false, false);
 
+    Mesh quadMesh;
+    quadMesh.LoadObjFile("quad.obj", true, false);
+
     dinoPhysical = {glm::vec3(0,0,0), 0, glm::vec3(0.15f ,0.15f ,0.15f )};
-    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
-    //Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f));
+    //Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f), &dinoDiffuse, &dinoNormal);
+    Object dino(&dinoPhysical, &m1, glm::vec3(0.9f, 0.5f, 0.3f));
 
     Physical boxPhysical{ glm::vec3(0.0, -50, 0.0), 0, glm::vec3(0.3f, 0.05f, 0.3f) };
     Object box(&boxPhysical, &m2, glm::vec3(0.3f, 0.5f, 0.9f));
@@ -117,6 +122,7 @@ int main() {
     Physical box2Physical{ glm::vec3(80, -20, 80), 0, glm::vec3(0.02f, 0.08f, 0.02f) };
     Object box2(&box2Physical, &m2, glm::vec3(0.3f, 0.9f, 0.5f));
 
+    /*
     GouraudPainter goraud;
     goraud.Init();
     goraud.AssignObjects(&box);
@@ -126,7 +132,16 @@ int main() {
     phong.Init();
     //goraud.AssignObjects(&dino);
     phong.AssignObjects(&dino);
-    
+    */
+
+    GBufferPainter gBuilderPainter;
+    gBuilderPainter.Init();
+    gBuilderPainter.AssignObjects(&box);
+    gBuilderPainter.AssignObjects(&box2);
+    gBuilderPainter.AssignObjects(&dino);
+
+    DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
+    gPhongPainter.Init();  
 
     glm::vec3 camPos(2, 1, 5);
     glm::vec3 camLook(0, 0, 0);
@@ -137,8 +152,12 @@ int main() {
         glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 3.0f, 20.0f)
 
     );
+    /*
     goraud.AssignStage(&stage1);
     phong.AssignStage(&stage1);
+    */
+    gBuilderPainter.AssignStage(&stage1);
+    gPhongPainter.AssignStage(&stage1);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -149,11 +168,18 @@ int main() {
     {
         gameLogic();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        /*
         goraud.DrawObjects();
-
         phong.DrawObjects();
+        */
+        gBuilderPainter.DrawObjects();
+        
+       // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //glClear(GL_COLOR_BUFFER_BIT);
+        gPhongPainter.DrawObjects();
+
         glfwSwapBuffers(window);
 
         /* Poll for and process events */

@@ -13,7 +13,7 @@ void Painter::AssignStage(Stage* stage)
 }
 
 
-void Painter::BindTextureIfExist(int shaderTextureUnit, Texture* texture)
+void Painter::BindToTextureUnit(int shaderTextureUnit, Texture* texture)
 {
     if (texture != nullptr)
     {
@@ -22,7 +22,7 @@ void Painter::BindTextureIfExist(int shaderTextureUnit, Texture* texture)
     }
 }
 
-void Painter::BindTextureIfExist(int shaderTextureUnit, GLuint textureHandle)
+void Painter::BindToTextureUnit(int shaderTextureUnit, GLuint textureHandle)
 {
     if (textureHandle > 0)
     {
@@ -72,8 +72,8 @@ void Painter::BindObjectVaoAndTexture(Object* obj)
     // bind texture(s)
     // always assume that, in shader code texture unit 0 is for diffuse sampler
     // texture unit 1 is for normal sampler
-    BindTextureIfExist(0, obj->mMaterial.mDiffuse);
-    BindTextureIfExist(1, obj->mMaterial.mNormal);
+    BindToTextureUnit(0, obj->mMaterial.mDiffuse);
+    BindToTextureUnit(1, obj->mMaterial.mNormal);
 }
 
 void Painter::RenderObject(Object* obj)
@@ -157,7 +157,7 @@ void GouraudPainter::DrawObjects()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // assume that depth map sampler is using texture unit 2 in shader(layout (binding=2))
-    BindTextureIfExist(2, depthMapTextureHandle);
+    BindToTextureUnit(2, depthMapTextureHandle);
 
     for (auto obj : mObjects)
     {
