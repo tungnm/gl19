@@ -1,49 +1,19 @@
 #version 460
 
-in vec3 sTanSpace;
-in vec3 vTanSpace;
-in vec2 TexCord;
+// send object color directly to fragment shader, no need to interpolate from vertex shader
+uniform vec3 ObjectColor;
 
-out vec4 FragColor;
+in vec3 RawPosition;
+in vec3 RawNormal;
 
-// texture sampler
-// layout (binding=0) set the texture unit 0 for this sampler2D DiffuseTexture
-layout (binding=0) uniform sampler2D DiffuseTexture;
-// layout (binding=1) set the texture unit 1 for this sampler2D NormalMapTexture
-layout (binding=1)uniform sampler2D NormalMapTexture;
+layout (location = 0) out vec3 GBufferPos;
+layout (location = 1) out vec3 GBufferNorm;
+layout (location = 2) out vec3 GBufferColor;
 
 void main()
 {
-    // since in view space camera is at (0,0,0), the vector from
-    // the vertex to the camera = (0,0,0) - vertex position in View
-    vec3 v = normalize(vTanSpace);
-    vec3 s = normalize(sTanSpace);
-        
-    vec3 newN = texture(NormalMapTexture, TexCord).xyz;
-    newN.xy = 2.0 * newN.xy - 1.0;
-    newN = normalize(newN);
-
-    //sample texture
-    vec3 texColor = texture(DiffuseTexture, TexCord).rgb;
-
-    float diffuseIntensity = dot(s, newN);
-        
-    vec3 diffuse = vec3(0,0,0);
-    vec3 specular = vec3(0,0,0);
-    
-    diffuse = diffuseIntensity * texColor;//vec3(0.9f, 0.5f, 0.3f);
-        
-    //blinn-phong use half way vector h
-    vec3 h = normalize(v + s);
-        
-    //blinn-phong
-    float specularIntensity = pow(dot(h, newN), 4);
-        
-    specular = specularIntensity * vec3(0.8);
-        
-    vec3 ambient = 0.05 * texColor;
-    
-    FragColor = vec4(ambient + diffuse + specular, 1.0);
-
-    
+    // output to G-Buffer with multiple rendering targets(writing to 3 textures at once)
+    GBufferPos = RawPosition;
+    GBufferNorm = RawNormal;
+    GBufferColor = ObjectColor;
 }
