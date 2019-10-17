@@ -39,10 +39,24 @@ void GBufferPainter::Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, mGColorTexHandle, 0);
 
-    // - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+    // need to create a depth buffer for this custom made framebuffer so that depth test will work
+    // depth buffer is a special RenderBuffer type, and not a Texture2D as the other color buffer
+    GLuint depthBuffer;
+    glGenRenderbuffers(1, &depthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+    // - tell OpenGL the mapping from fragment shader out variables to G-buffer textures(color attachments)
+    // For example. this means: set  the output "layout (location = 0) out vec3 GBufferPos;" in fragment shader to be render to
+    // GL_COLOR_ATTACHMENT0 of frame buffer in this case(which is actually a texture, mGPositionTexHandle in this case)
     unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     // set the attachment to the currently bind frame buffer
+    // note: this is different from glDrawBuffer (without s at the end)
     glDrawBuffers(3, attachments);
+
+    // good practice to bind back to default frame buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 GBuffer GBufferPainter::GetGBuffer()

@@ -159,6 +159,8 @@ int main() {
     gBuilderPainter.AssignStage(&stage1);
     gPhongPainter.AssignStage(&stage1);
 
+    // not sure if this enable is per framebuffer or 
+    // globally?
     glEnable(GL_DEPTH_TEST);
 
     glfwSetKeyCallback(window, key_callback);
@@ -168,7 +170,22 @@ int main() {
     {
         gameLogic();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        /*
+        glClear and framebuffer:
+        By binding to the GL_FRAMEBUFFER target all the next read
+        and write framebuffer operations will affect the currently
+        bound framebuffer. It is also possible to bind a framebuffer
+        to a read or write target specifically by binding to GL_READ_FRAMEBUFFER
+        or GL_DRAW_FRAMEBUFFER respectively. The framebuffer bound
+        to GL_READ_FRAMEBUFFER is then used for all read operations like 
+        glReadPixels and the framebuffer bound to GL_DRAW_FRAMEBUFFER 
+        is used as the destination for rendering, clearing and other
+        write operations. Most of the times you won't need to make
+        this distinction though and you generally bind to both with
+        GL_FRAMEBUFFER.
+
+        */
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         /*
         goraud.DrawObjects();
