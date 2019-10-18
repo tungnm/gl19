@@ -76,11 +76,11 @@ void Painter::BindObjectVaoAndTexture(Object* obj)
     BindToTextureUnit(1, obj->mMaterial.mNormal);
 }
 
-void Painter::RenderObject(Object* obj)
+void Painter::RenderMesh(Mesh* mesh)
 {
     glDrawElements(
         GL_TRIANGLES,
-        obj->mMesh->GetIndiceSize(),
+        mesh->GetIndiceSize(),
         GL_UNSIGNED_INT,
         (void*)0);
 }
@@ -146,7 +146,7 @@ void GouraudPainter::DrawObjects()
         BindObjectVaoAndTexture(obj);
          
         // common render method
-        RenderObject(obj);
+        RenderMesh(obj->mMesh);
     }
     
     // second pass
@@ -172,7 +172,7 @@ void GouraudPainter::DrawObjects()
         mShaderProgram.SendVec3Uniform("ObjectColor", obj->mMaterial.mColor);
 
         // common render method
-        RenderObject(obj);
+        RenderMesh(obj->mMesh);
     }
     
 }
@@ -244,7 +244,7 @@ void PhongNormalMapPainter::DrawObjects()
         CalculateAndSendObjectUniforms(&mShaderProgram, obj, mStage);
         BindObjectVaoAndTexture(obj);
         // common render method
-        RenderObject(obj);
+        RenderMesh(obj->mMesh);
     }
 }
 

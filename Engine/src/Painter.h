@@ -32,7 +32,7 @@ protected:
 
     glm::mat4 CalculateMVP(Object* obj, Stage* stage);
 
-    void RenderObject(Object* obj);
+    void RenderMesh(Mesh* mesh);
     
     std::vector<Object* > mObjects;
     Stage* mStage;

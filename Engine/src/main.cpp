@@ -140,7 +140,10 @@ int main() {
     gBuilderPainter.AssignObjects(&box2);
     gBuilderPainter.AssignObjects(&dino);
 
-    DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
+    TexturePainter texturePainter(gBuilderPainter.GetGBuffer().mNormalTextureHandle, &quadMesh);
+    texturePainter.Init();
+
+   DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
     gPhongPainter.Init();  
 
     glm::vec3 camPos(2, 1, 5);
@@ -159,8 +162,6 @@ int main() {
     gBuilderPainter.AssignStage(&stage1);
     gPhongPainter.AssignStage(&stage1);
 
-    // not sure if this enable is per framebuffer or 
-    // globally?
     glEnable(GL_DEPTH_TEST);
 
     glfwSetKeyCallback(window, key_callback);
@@ -194,7 +195,9 @@ int main() {
         
        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //glClear(GL_COLOR_BUFFER_BIT);
-        gPhongPainter.DrawObjects();
+        //gPhongPainter.DrawObjects();
+
+        texturePainter.DrawObjects();
 
         glfwSwapBuffers(window);
 

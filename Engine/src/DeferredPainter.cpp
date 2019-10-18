@@ -83,7 +83,7 @@ void GBufferPainter::DrawObjects()
         BindObjectVaoAndTexture(obj);
          
         // common render method
-        RenderObject(obj);
+        RenderMesh(obj->mMesh);
     }
 }
 
@@ -103,9 +103,9 @@ DeferredPhongPainter::~DeferredPhongPainter() {}
 void DeferredPhongPainter::Init()
 {
     // shader load
-    mShaderProgram.LoadShader("deferPhongVert", "deferred.phong.vert.glsl", GL_VERTEX_SHADER);
+    mShaderProgram.LoadShader("quadVert", "fullScreenQuad.vert.glsl", GL_VERTEX_SHADER);
     mShaderProgram.LoadShader("deferePhongFrag", "deferred.phong.frag.glsl", GL_FRAGMENT_SHADER);
-    mShaderProgram.CreateProgram("deferPhongVert", "deferePhongFrag");
+    mShaderProgram.CreateProgram("quadVert", "deferePhongFrag");
 
 }
 
@@ -136,10 +136,34 @@ void DeferredPhongPainter::DrawObjects()
 
     mQuadMesh->BindBuffers();
 
-    glDrawElements(
-        GL_TRIANGLES,
-        mQuadMesh->GetIndiceSize(),
-        GL_UNSIGNED_INT,
-        (void*)0);
+    RenderMesh(mQuadMesh);
 
 }
+
+void TexturePainter::DrawObjects()
+{
+    mShaderProgram.MakeCurrent();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   
+    BindToTextureUnit(0, mTextureHandle);
+
+    mQuadMesh->BindBuffers();
+
+    RenderMesh(mQuadMesh);
+}
+
+void TexturePainter::Init()
+{
+    // load shader
+    mShaderProgram.LoadShader("quadVert", "fullScreenQuad.vert.glsl", GL_VERTEX_SHADER);
+    mShaderProgram.LoadShader("textureRenderFrag", "renderTexture.frag.glsl", GL_FRAGMENT_SHADER);
+    mShaderProgram.CreateProgram("quadVert", "textureRenderFrag");
+
+}
+
+TexturePainter::TexturePainter(GLuint textureHandle, Mesh* quadMesh)
+: mTextureHandle(textureHandle), mQuadMesh(quadMesh) {}
+
+TexturePainter::~TexturePainter() {}
