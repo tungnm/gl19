@@ -140,11 +140,16 @@ int main() {
     gBuilderPainter.AssignObjects(&box2);
     gBuilderPainter.AssignObjects(&dino);
 
-    TexturePainter texturePainter(gBuilderPainter.GetGBuffer().mNormalTextureHandle, &quadMesh);
-    texturePainter.Init();
 
-   DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
+
+    DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
     gPhongPainter.Init();  
+
+    SSAOPainter ssaoPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
+    ssaoPainter.Init();
+
+    TexturePainter texturePainter(ssaoPainter.GetSSAOTextureHandle(), &quadMesh);
+    texturePainter.Init();
 
     glm::vec3 camPos(2, 1, 5);
     glm::vec3 camLook(0, 0, 0);
@@ -161,6 +166,8 @@ int main() {
     */
     gBuilderPainter.AssignStage(&stage1);
     gPhongPainter.AssignStage(&stage1);
+    ssaoPainter.AssignStage(&stage1);
+    
 
     glEnable(GL_DEPTH_TEST);
 
@@ -192,12 +199,14 @@ int main() {
         phong.DrawObjects();
         */
         gBuilderPainter.DrawObjects();
+
+        ssaoPainter.DrawObjects();
         
        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //glClear(GL_COLOR_BUFFER_BIT);
-        //gPhongPainter.DrawObjects();
+        gPhongPainter.DrawObjects();
 
-        texturePainter.DrawObjects();
+        //texturePainter.DrawObjects();
 
         glfwSwapBuffers(window);
 

@@ -10,6 +10,7 @@ out vec4 outFragColor;
 layout (binding=0) uniform sampler2D gBufferPosition;
 layout (binding=1) uniform sampler2D gBufferNormal;
 layout (binding=2) uniform sampler2D gBufferColor;
+layout (binding=3) uniform sampler2D ao;
 
 void main()
 {
@@ -39,7 +40,8 @@ void main()
         specular = specularIntensity * vec3(0.8);
     }
     
-    vec3 ambient = 0.05 * FragColor;
+    float ao = texture(ao, texCord).r;
+    vec3 ambient = 0.7 * ao * FragColor;
     outFragColor = vec4(ambient + diffuse + specular, 1.0);
 
 }
