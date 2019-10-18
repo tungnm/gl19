@@ -114,7 +114,7 @@ void DeferredPhongPainter::DrawObjects()
     mShaderProgram.MakeCurrent();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // bind the textures of G-buffer, generated previously to the 
     // texture unit 0 , 1, 2 respectively, ready to be sampled by this Painter
 

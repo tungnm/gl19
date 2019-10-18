@@ -34,7 +34,7 @@ void main()
         vec3 h = normalize(v + s);
             
         //blinn-phong
-        float specularIntensity = pow(max(0, dot(h, FragNormView)), 4);
+        float specularIntensity = pow(max(0, dot(h, FragNormView)), 8);
             
         specular = specularIntensity * vec3(0.8);
     }
