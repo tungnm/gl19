@@ -123,11 +123,6 @@ int main() {
     Object box2(&box2Physical, &m2, glm::vec3(0.3f, 0.9f, 0.5f));
 
     /*
-    GouraudPainter goraud;
-    goraud.Init();
-    goraud.AssignObjects(&box);
-    goraud.AssignObjects(&box2);
-
     PhongNormalMapPainter phong;
     phong.Init();
     //goraud.AssignObjects(&dino);
@@ -141,15 +136,9 @@ int main() {
     gBuilderPainter.AssignObjects(&dino);
 
 
-
-    DeferredPhongPainter gPhongPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
-    gPhongPainter.Init();  
-
     SSAOPainter ssaoPainter(gBuilderPainter.GetGBuffer(), &quadMesh);
     ssaoPainter.Init();
-
-    TexturePainter texturePainter(ssaoPainter.GetSSAOTextureHandle(), &quadMesh);
-    texturePainter.Init();
+    
 
     glm::vec3 camPos(2, 1, 5);
     glm::vec3 camLook(0, 0, 0);
@@ -164,10 +153,34 @@ int main() {
     goraud.AssignStage(&stage1);
     phong.AssignStage(&stage1);
     */
+
+    std::vector<Object*> objects;
+    objects.push_back(&dino);
+    objects.push_back(&box);
+    objects.push_back(&box2);
+
+    ShadowMapPainter shadowPainter(objects, stage1.GetLight()[0]);
+    shadowPainter.Init();
+
+    DeferredPhongPainter gPhongPainter(
+        gBuilderPainter.GetGBuffer(), &quadMesh, ssaoPainter.GetSSAOTextureHandle(),
+        shadowPainter.GetShadowMapTextureHandle());
+    gPhongPainter.Init();
+
     gBuilderPainter.AssignStage(&stage1);
     gPhongPainter.AssignStage(&stage1);
     ssaoPainter.AssignStage(&stage1);
-    
+
+    /*
+    GouraudPainter goraud(shadowPainter.GetShadowMapTextureHandle()) ;
+    goraud.Init();
+    goraud.AssignObjects(&dino);
+    goraud.AssignObjects(&box);
+    goraud.AssignObjects(&box2);
+    goraud.AssignStage(&stage1);
+    */
+    TexturePainter texturePainter(shadowPainter.GetShadowMapTextureHandle(), &quadMesh);
+    texturePainter.Init();
 
     glEnable(GL_DEPTH_TEST);
 
@@ -194,18 +207,14 @@ int main() {
 
         */
         
-        /*
-        goraud.DrawObjects();
-        phong.DrawObjects();
-        */
         gBuilderPainter.DrawObjects();
 
         ssaoPainter.DrawObjects();
         
-       // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glClear(GL_COLOR_BUFFER_BIT);
         gPhongPainter.DrawObjects();
 
+        //shadowPainter.DrawObjects();
+        //goraud.DrawObjects();
         //texturePainter.DrawObjects();
 
         glfwSwapBuffers(window);

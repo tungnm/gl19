@@ -115,19 +115,7 @@ void GouraudPainter::DrawObjects()
         std::cout << "\nDrawObjects: mStage is null";
         return;
     }
-    mDepthShader.MakeCurrent();
     
-    // todo: maybe have this pass as a separate painter, to reuse
-    // the shadow map for other shading, ie: Phong with shadow map?
-    // first pass shadow
-    // 1. first render to depth map
-    glViewport(0, 0, 1280, 960);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    // set the camera view from the light source, looking into the scene
-    // also set the projection matrix for the light view to be very tight,
-    // to increase precision for z buffer.
     Stage lightStage;
     lightStage.SetCamera(mStage->GetLight()[0].mPositon, glm::vec3(0,0,0));
     lightStage.AddLight(glm::vec3(10, 10, 10));
@@ -135,19 +123,6 @@ void GouraudPainter::DrawObjects()
                                                               // tight frustum
         glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 14.0f, 22.0f)
     );
-
-    for (auto obj : mObjects)
-    {
-        // shadow vert shader only need MVP to transform to light space, no need
-        // to use the common CalculateAndSendObjectUniforms, which send
-        // M, MV, MVP.
-        glm::mat4 lightMVP = CalculateMVP(obj, &lightStage);
-        mDepthShader.SendMat4Uniform("MVP", lightMVP);
-        BindObjectVaoAndTexture(obj);
-         
-        // common render method
-        RenderMesh(obj->mMesh);
-    }
     
     // second pass
     mShaderProgram.MakeCurrent();
@@ -183,47 +158,10 @@ void GouraudPainter::Init()
     mShaderProgram.LoadShader("basicVert", "gouraud.vert.glsl", GL_VERTEX_SHADER);
     mShaderProgram.LoadShader("basicFrag", "gouraud.frag.glsl", GL_FRAGMENT_SHADER);
     mShaderProgram.CreateProgram("basicVert", "basicFrag");
-
-    // depth shader
-    mDepthShader.LoadShader("depthVert", "depth.vert.glsl", GL_VERTEX_SHADER);
-    mDepthShader.LoadShader("depthFrag", "depth.frag.glsl", GL_FRAGMENT_SHADER);
-    mDepthShader.CreateProgram("depthVert", "depthFrag");
-
-    //shadow map:
-    //First we'll create a framebuffer object for rendering the depth map:
-
-    glGenFramebuffers(1, &depthMapFBO);
-
-    // Next we create a 2D texture that we'll use as the framebuffer's depth buffer:
-    const unsigned int SHADOW_WIDTH = 1280, SHADOW_HEIGHT = 960;
-
-    glGenTextures(1, &depthMapTextureHandle);
-    glBindTexture(GL_TEXTURE_2D, depthMapTextureHandle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    //With the generated depth texture we can attach it as the framebuffer's depth buffer:
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTextureHandle, 0);
-    
-    /*
-    A framebuffer object however is not complete without a color buffer so
-    we need to explicitly tell OpenGL we're not going to render any color data.
-    We do this by setting both the read and draw buffer to GL_NONE with
-    glDrawBuffer and glReadbuffer.
-    */
-
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 }
 
-GouraudPainter::GouraudPainter() : Painter() {}
+GouraudPainter::GouraudPainter(GLuint depthMapTexHandle)
+    : depthMapTextureHandle(depthMapTexHandle) {}
 
 GouraudPainter::~GouraudPainter() {}
 
@@ -252,3 +190,93 @@ PhongNormalMapPainter::PhongNormalMapPainter() : Painter() {}
 
 PhongNormalMapPainter::~PhongNormalMapPainter() {}
 
+void ShadowMapPainter::DrawObjects()
+{
+
+    mDepthShader.MakeCurrent();
+    
+    // Render to depth map
+    glViewport(0, 0, 1280, 960);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    
+    // set the camera view from the light source, looking into the scene
+    // also set the projection matrix for the light view to be very tight,
+    // to increase precision for z buffer.
+    Stage lightStage;
+    lightStage.SetCamera(mLight.mPositon, glm::vec3(0, 0, 0));
+    //lightStage.AddLight(glm::vec3(10, 10, 10));
+    //todo: hardcode value but should do dynamic calculation here
+    lightStage.SetProjectionMatrix(
+        // tight frustum
+        glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 14.0f, 22.0f)
+    );
+
+    // note: this is mobjects, not mObjects.
+    for (auto obj : mobjects)
+    {
+        // shadow vert shader only need MVP to transform to light space, no need
+        // to use the common CalculateAndSendObjectUniforms, which send
+        // M, MV, MVP.
+        glm::mat4 lightMVP = CalculateMVP(obj, &lightStage);
+        mDepthShader.SendMat4Uniform("MVP", lightMVP);
+        BindObjectVaoAndTexture(obj);
+
+        // Render all objects to the shadowmap FBO/ texture(from light perspective),
+        // created in Init
+        RenderMesh(obj->mMesh);
+    }
+}
+
+void ShadowMapPainter::Init()
+{
+    // depth shader
+    mDepthShader.LoadShader("depthVert", "depth.vert.glsl", GL_VERTEX_SHADER);
+    mDepthShader.LoadShader("depthFrag", "depth.frag.glsl", GL_FRAGMENT_SHADER);
+    mDepthShader.CreateProgram("depthVert", "depthFrag");
+
+    //shadow map:
+    //First we'll create a framebuffer object for rendering the depth map:
+
+    glGenFramebuffers(1, &depthMapFBO);
+
+    // Next we create a 2D texture that we'll use as the framebuffer's depth buffer:
+    const unsigned int SHADOW_WIDTH = 1280, SHADOW_HEIGHT = 960;
+
+    glGenTextures(1, &depthMapTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, depthMapTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+        SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    //With the generated depth texture we can attach it as the framebuffer's depth buffer:
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMapTextureHandle, 0);
+
+    /*
+    A framebuffer object however is not complete without a color buffer so
+    we need to explicitly tell OpenGL we're not going to render any color data.
+    We do this by setting both the read and draw buffer to GL_NONE with
+    glDrawBuffer and glReadbuffer.
+    */
+
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}
+
+GLuint ShadowMapPainter::GetShadowMapTextureHandle()
+{
+    return depthMapTextureHandle;
+}
+
+ShadowMapPainter::ShadowMapPainter(std::vector<Object*> objects, Light light)
+ : mobjects(objects), mLight(light) {}
+
+ShadowMapPainter::~ShadowMapPainter()
+{
+}

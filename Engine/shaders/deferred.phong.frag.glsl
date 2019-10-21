@@ -35,13 +35,13 @@ void main()
         vec3 h = normalize(v + s);
             
         //blinn-phong
-        float specularIntensity = pow(max(0, dot(h, FragNormView)), 8);
+        float specularIntensity = pow(max(0, dot(h, FragNormView)), 9);
             
         specular = specularIntensity * vec3(0.8);
     }
     
     float ao = texture(ao, texCord).r;
-    vec3 ambient = 0.7 * ao * FragColor;
+    vec3 ambient = 0.3 * ao * FragColor;
     outFragColor = vec4(ambient + diffuse + specular, 1.0);
 
 }

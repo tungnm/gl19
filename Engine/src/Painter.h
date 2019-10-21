@@ -39,6 +39,9 @@ protected:
     ShaderProgram mShaderProgram;
 
 public:
+    // todo: get rid of these 2 functions for Parent PAinter
+    // class. Each Painter should take in what he needs in the
+    // constructor
     void AssignObjects(Object* object);
     void AssignStage(Stage* stage);
     
@@ -63,7 +66,7 @@ public:
     void DrawObjects();
     void Init();
 
-    GouraudPainter();
+    GouraudPainter(GLuint depthMapTextureHandle);
     ~GouraudPainter();
 };
 
@@ -75,4 +78,22 @@ public:
 
     PhongNormalMapPainter();
     ~PhongNormalMapPainter();
+};
+
+class ShadowMapPainter : public Painter
+{
+private:
+    Light mLight;
+    GLuint depthMapFBO;
+    GLuint depthMapTextureHandle;
+    ShaderProgram mDepthShader;
+    //todo: remove this from main Painter class
+    std::vector<Object*> mobjects;
+public:
+    void DrawObjects();
+    void Init();
+    GLuint GetShadowMapTextureHandle();
+
+    ShadowMapPainter(std::vector<Object*> objects, Light light);
+    ~ShadowMapPainter();
 };

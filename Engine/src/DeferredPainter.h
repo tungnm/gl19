@@ -1,5 +1,6 @@
 #pragma once
 #include "Painter.h"
+#include <random>
 struct GBuffer
 {
     GLuint mPositionTextureHandle;
@@ -35,13 +36,19 @@ private:
     // handle to frame buffer(G-buffer)
     GBuffer mInputGBuffer;
     Mesh* mQuadMesh;
+    GLuint mSSAOTextureHandle;
+    GLuint mShadowMapTextureHandle;
     
 public:
     void DrawObjects();
     void Init();
     
     // This Phong painter needs a GBuffer, and a quad mesh to paint
-    DeferredPhongPainter(GBuffer gBuffer, Mesh* quadMesh);
+    DeferredPhongPainter(
+        GBuffer gBuffer,
+        Mesh* quadMesh,
+        GLuint ssaoTexHandle,
+        GLuint shadowMapTexHandle);
     ~DeferredPhongPainter();
 };
 
@@ -72,6 +79,8 @@ private:
     
     GLuint mSSAOTextureHandle; // This painter draws the AO values to this texture
     GLuint mFrameBufferHandle;
+
+    GLuint noiseTextureHandle;
 
     std::vector<glm::vec3> GenerateRandomVectors(float maxLength, int size);
 public:

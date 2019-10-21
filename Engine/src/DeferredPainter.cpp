@@ -1,6 +1,51 @@
 #include "DeferredPainter.h"
 #include <gtc/type_ptr.hpp>
 
+
+
+class Random {
+private:
+    std::mt19937 generator;
+    std::uniform_real_distribution<float> distr01;
+
+public:
+    Random() : distr01(0.0f, 1.0f) {
+        std::random_device rd;
+        generator.seed(rd());
+    }
+
+    float nextFloat() {
+        return distr01(generator);
+    }
+
+    static void shuffle(std::vector<GLfloat>& v) {
+        auto rng = std::default_random_engine{};
+        std::shuffle(v.begin(), v.end(), rng);
+    }
+
+    glm::vec3 uniformHemisphere() {
+        glm::vec3 result;
+        float x1 = nextFloat(), x2 = nextFloat();
+        float s = glm::sqrt(1.0f - x1 * x1);
+        result.x = glm::cos(glm::two_pi<float>() * x2) * s;
+        result.y = glm::sin(glm::two_pi<float>() * x2) * s;
+        result.z = x1;
+        return result;
+    }
+
+    glm::vec3 uniformCircle() {
+        glm::vec3 result(0.0f);
+        float x = nextFloat();
+        result.x = glm::cos(glm::two_pi<float>() * x);
+        result.y = glm::sin(glm::two_pi<float>() * x);
+        return result;
+    }
+};
+
+
+
+
+
 void GBufferPainter::Init()
 {
     // shader load
@@ -95,8 +140,15 @@ GBufferPainter::GBufferPainter()
 GBufferPainter::~GBufferPainter() {}
 
 
-DeferredPhongPainter::DeferredPhongPainter(GBuffer gBuffer, Mesh* quadMesh)
-    : mInputGBuffer(gBuffer), mQuadMesh(quadMesh) {}
+DeferredPhongPainter::DeferredPhongPainter(
+    GBuffer gBuffer,
+    Mesh* quadMesh,
+    GLuint ssaoTexHandle,
+    GLuint shadowMapTexHandle)
+    : mInputGBuffer(gBuffer),
+    mQuadMesh(quadMesh),
+    mSSAOTextureHandle(ssaoTexHandle),
+    mShadowMapTextureHandle(shadowMapTexHandle) {}
 
 DeferredPhongPainter::~DeferredPhongPainter() {}
 
@@ -121,7 +173,7 @@ void DeferredPhongPainter::DrawObjects()
     BindToTextureUnit(0, mInputGBuffer.mPositionTextureHandle);
     BindToTextureUnit(1, mInputGBuffer.mNormalTextureHandle);
     BindToTextureUnit(2, mInputGBuffer.mColorTextureHandle);
-    
+    BindToTextureUnit(3, mSSAOTextureHandle);
     // calculate & send LightPosView;
     // todo: move this to a common method in Painter if can reuse
 
@@ -200,12 +252,30 @@ void SSAOPainter::Init()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     mShaderProgram.MakeCurrent();
-    std::vector<glm::vec3> randoms = GenerateRandomVectors(0.04, 16);
+    std::vector<glm::vec3> randoms = GenerateRandomVectors(0.09, 32);
     GLuint modelLoc = glGetUniformLocation(mShaderProgram.GetProgramHandle(), "gKernel");
     glUniform3fv(modelLoc, randoms.size(), glm::value_ptr(randoms[0]));
 
-    //test test
-    BindToTextureUnit(3, mSSAOTextureHandle);
+    //std::vector<glm::vec3> noise = GenerateRandomVectors(1.0, 16);
+    // test
+    Random rand;
+    int size = 4;
+    std::vector<GLfloat> randDirections(3 * size * size);
+    for (int i = 0; i < size * size; i++) {
+        glm::vec3 v = rand.uniformCircle();
+        randDirections[i * 3 + 0] = v.x;
+        randDirections[i * 3 + 1] = v.y;
+        randDirections[i * 3 + 2] = v.z;
+    }
+
+    // generate noise texture
+    glGenTextures(1, &noiseTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, noiseTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, randDirections.data());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 }
 
@@ -217,9 +287,9 @@ std::vector<glm::vec3> SSAOPainter::GenerateRandomVectors(float maxLength, int s
     for (int i = 0; i < size; i++)
     {
         randomVectors[i] = glm::vec3(
-            float(rand() % 100 + 20) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0 ),
-            float(rand() % 100 + 20) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0),
-            float(rand() % 100 + 20) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0));
+            float(rand() % 100 + 10) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0 ),
+            float(rand() % 100 + 10) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0),
+            float(rand() % 100 + 10) / 100.0f * maxLength * (rand() % 100 > 49 ? 1.0 : -1.0));
     }
     
     return randomVectors;
@@ -235,10 +305,10 @@ void SSAOPainter::DrawObjects()
     // texture unit 0. This SSAO implementation only use view position data
 
     BindToTextureUnit(0, mInputGBuffer.mPositionTextureHandle);
+    BindToTextureUnit(1, mInputGBuffer.mNormalTextureHandle);
+    BindToTextureUnit(2, noiseTextureHandle);
 
     // send random vectors:
-
-
 
     // send projection matrix
     mShaderProgram.SendMat4Uniform("projectionMatrix", mStage->GetProjectionMatrix());
