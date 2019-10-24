@@ -210,10 +210,12 @@ int main() {
         gBuilderPainter.DrawObjects();
 
         ssaoPainter.DrawObjects();
+
+        shadowPainter.DrawObjects();
         
         gPhongPainter.DrawObjects();
 
-        //shadowPainter.DrawObjects();
+        
         //goraud.DrawObjects();
         //texturePainter.DrawObjects();
 

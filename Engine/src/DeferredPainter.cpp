@@ -166,6 +166,7 @@ void DeferredPhongPainter::DrawObjects()
     mShaderProgram.MakeCurrent();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, 1024, 768);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // bind the textures of G-buffer, generated previously to the 
     // texture unit 0 , 1, 2 respectively, ready to be sampled by this Painter
@@ -174,6 +175,8 @@ void DeferredPhongPainter::DrawObjects()
     BindToTextureUnit(1, mInputGBuffer.mNormalTextureHandle);
     BindToTextureUnit(2, mInputGBuffer.mColorTextureHandle);
     BindToTextureUnit(3, mSSAOTextureHandle);
+    BindToTextureUnit(4, mShadowMapTextureHandle);
+
     // calculate & send LightPosView;
     // todo: move this to a common method in Painter if can reuse
 
@@ -184,6 +187,25 @@ void DeferredPhongPainter::DrawObjects()
     );
     glm::vec4 lightPosView = view * glm::vec4(mStage->GetLight()[0].mPositon, 1.0f);
     mShaderProgram.SendVec4Uniform("LightPosView", lightPosView);
+
+    // calculate inverseMVThenLightMVP: Since G-buffer has the vertex position
+    // in view space which is View * Model * VertexPosition. Now we want the vertex position
+    // in Light space. So first we need to invert the view matrix, and then multiply with
+    // ViewFromLight and LightPerspectiveProjection matrix.
+
+    glm::mat4 lightView = glm::lookAt(
+        mStage->GetLight()[0].mPositon, // camera pos in world space
+        mStage->GetCamera().mTarget, // camera target
+        glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+    );
+
+    //todo: hardcode value but should do dynamic calculation here
+    glm::mat4 lightProj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 14.0f, 22.0f);
+
+    glm::mat4 inverseVThenLightMVP = lightProj * lightView * glm::inverse(view);
+
+    mShaderProgram.SendMat4Uniform("inverseVThenLightMVP", inverseVThenLightMVP);
+
 
     mQuadMesh->BindBuffers();
 
